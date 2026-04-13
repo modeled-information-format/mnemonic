@@ -11,7 +11,7 @@ authors = [
 keywords = ["claude-code", "plugin", "memory", "ai", "mif"]
 dependencies = [
     "pyyaml>=6.0",
-    "ruamel.yaml>=0.18.0",
+    "ruamel.yaml>=0.19.1",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
