@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- **[MIF Submodule]**: Git submodule `mif` (https://github.com/zircote/MIF.git)
+- **[MIF Submodule]**: Git submodule `mif` (https://github.com/modeled-information-format/MIF.git)
 - **[populate_fallback.py]**: Obsolete script for copying from submodule to fallback
 
 ## [0.6.0] - 2026-02-11

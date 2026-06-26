@@ -26,10 +26,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/zircote/mnemonic"
-Documentation = "https://github.com/zircote/mnemonic#readme"
-Repository = "https://github.com/zircote/mnemonic.git"
-Issues = "https://github.com/zircote/mnemonic/issues"
+Homepage = "https://github.com/modeled-information-format/mnemonic"
+Documentation = "https://github.com/modeled-information-format/mnemonic#readme"
+Repository = "https://github.com/modeled-information-format/mnemonic.git"
+Issues = "https://github.com/modeled-information-format/mnemonic/issues"
 
 [tool.ruff]
 target-version = "py38"

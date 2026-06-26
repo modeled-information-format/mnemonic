@@ -19,7 +19,7 @@ Be respectful, inclusive, and constructive in all interactions.
 
 ```bash
 # Clone the repository
-git clone https://github.com/zircote/mnemonic.git
+git clone https://github.com/modeled-information-format/mnemonic.git
 cd mnemonic
 
 # Set up development environment
