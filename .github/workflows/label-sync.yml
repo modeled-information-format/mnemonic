@@ -1,5 +1,6 @@
-# Sync this repo's labels to the org standard (modeled-information-format/.github
-# labels.yml) plus an optional repo-local overlay (.github/labels.yml).
+# Sync this repo's labels to the org standard in modeled-information-format/.github
+# (the labels.yml source of truth), plus an optional repo-local overlay
+# (.github/labels.yml).
 name: Sync labels
 on:
   push:
@@ -8,11 +9,12 @@ on:
   schedule:
     - cron: '0 6 * * 1'   # weekly drift correction
   workflow_dispatch: {}
+permissions: {}
 jobs:
   labels:
     permissions:
       contents: read
       issues: write
-    uses: modeled-information-format/.github/.github/workflows/reusable-label-sync.yml@0ef7cfddaf9b1f763c896c373f227b3450270abc
+    uses: modeled-information-format/.github/.github/workflows/reusable-label-sync.yml@08f06af29dfb1877e2dcfaaa90bf773a63261139
     with:
       local-labels: .github/labels.yml   # merged over the org set; absent file = org set only
