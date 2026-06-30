@@ -18,7 +18,7 @@ authoritative, governing process; this page makes them reachable from here.
 
 ## Reusable CI/release workflows
 
-This repo's CI and release gates are **thin SHA-pinned callers** of the org's reusable workflows
+Some of this repo's automation (for example, label sync and Dependabot auto-merge) is implemented as **thin SHA-pinned callers** of the org's reusable workflows
 in [`.github/.github/workflows/`](https://github.com/modeled-information-format/.github/tree/main/.github/workflows).
-The architecture is recorded in the org
+The broader reusable CI/release workflow architecture is recorded in the org
 [ADR-002: reusable quality-gate architecture](https://github.com/modeled-information-format/.github/blob/main/docs/adr/ADR-002-reusable-quality-gate-architecture.md).
