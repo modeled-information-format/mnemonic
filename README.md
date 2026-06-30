@@ -249,6 +249,7 @@ Autonomous agents for specialized tasks:
 | [Ontologies](docs/ontologies.md) | Custom ontology guide |
 | [Validation](docs/validation.md) | Memory validation guide |
 | [ADRs](docs/adrs/) | Architecture decision records |
+| [Org governance & release runbooks](docs/reference/org-governance.md) | Org-wide release, branch-protection, Dependabot, and labels runbooks |
 
 ## Proactive Behavior
 

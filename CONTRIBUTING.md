@@ -130,6 +130,12 @@ make validate-memories-ci
 
 ## Pull Request Process
 
+> **Release process**: all releases in this repository follow the org
+> [release runbook](https://github.com/modeled-information-format/.github/blob/main/docs/runbooks/release-runbook.md) —
+> the required, audit-gated attested process (punch-list audit, epics + sub-issues, decision log,
+> release workplan issue, one PR per epic under GitHub Flow, and attested cutover).
+> See [org governance & release runbooks](docs/reference/org-governance.md) for the full set.
+
 1. **Fork** the repository
 2. **Create** a feature branch from `main`
    ```bash
