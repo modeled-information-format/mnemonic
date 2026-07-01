@@ -2,7 +2,7 @@
 name: Dependabot auto-merge
 
 # Thin caller of the org reusable (pinned to .github main). Approves + auto-merges
-# patch Dependabot updates via the org CI App; minor/major stay manual. Repo
+# patch Dependabot updates via the org automerge App; minor/major stay manual. Repo
 # settings (allow_auto_merge + branch protection) are applied out-of-band by
 # docs/onboarding/org/dependabot-automerge-settings.sh in the .github repo.
 
@@ -17,8 +17,8 @@ permissions:
 jobs:
   automerge:
     if: ${{ github.actor == 'dependabot[bot]' }}
-    uses: modeled-information-format/.github/.github/workflows/reusable-dependabot-automerge.yml@219e6e121531701e787db57c9bdf9e5cfdcbfb7b # reusable-dependabot-automerge.yml @ .github main
+    uses: modeled-information-format/.github/.github/workflows/reusable-dependabot-automerge.yml@f29366f7dbe223fcf14e8994483fec667faa3164 # reusable-dependabot-automerge.yml @ .github main
     with:
       update-types: patch
     secrets:
-      app-private-key: ${{ secrets.MIF_CI_CLIENT_APP_PRIVATE_KEY }}
+      app-private-key: ${{ secrets.AUTOMERGE_CLIENT_APP_PRIVATE_KEY }}
