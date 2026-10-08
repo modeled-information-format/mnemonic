@@ -125,7 +125,15 @@ def update_decay(roots: List[Path], report: Report, dry_run: bool = False) -> in
                 continue
 
             days_since = (now - last_accessed).total_seconds() / 86400.0
-            new_strength = calculate_strength(days_since, half_life_days, current_strength, str(model))
+            # Strength is a function of time since last access, so compute it
+            # from full strength rather than from the stored, already-decayed
+            # value: re-applying the whole interval on every run compounded the
+            # decay. min() keeps a strength someone deliberately set lower, and
+            # makes repeated runs idempotent.
+            new_strength = min(
+                current_strength,
+                calculate_strength(days_since, half_life_days, 1.0, str(model)),
+            )
             new_strength = round(new_strength, 4)
 
             if abs(new_strength - current_strength) < 0.005:

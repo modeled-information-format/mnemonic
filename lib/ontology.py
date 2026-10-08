@@ -18,6 +18,7 @@ try:
 except ImportError:
     yaml = None
 
+from lib.mif_compat import merge_ontologies
 from lib.paths import get_v2_resolver
 
 
@@ -375,26 +376,36 @@ def get_ontology_info() -> dict:
         if "discovery" in mif_data:
             info["discovery_enabled"] = mif_data["discovery"].get("enabled", False)
 
-    # Also check custom ontologies (they extend MIF base)
+    # Also check custom ontologies (they extend MIF base). Every existing file
+    # contributes (MIF 1.4.1 section 10.8.5); on conflicts the
+    # higher-precedence file (earlier in get_ontology_paths) wins.
     custom_paths = get_v2_resolver().get_ontology_paths()
-
+    loaded_paths = []
+    datas = []
     for ont_path in custom_paths:
         if ont_path.exists():
             data = _load_yaml_file(ont_path)
-            if data:
-                info["loaded"] = True
-                info["custom_path"] = str(ont_path)
-                if "ontology" in data:
-                    info["custom_id"] = data["ontology"].get("id")
-                if "namespaces" in data:
-                    ns_list = []
-                    _collect_namespaces(data["namespaces"], "", ns_list)
-                    info["namespaces"].extend(ns_list)
-                info["entity_types"].extend(_extract_entity_type_names(data))
-                if isinstance(data.get("traits"), dict):
-                    info["traits"].update(data["traits"])
-                if isinstance(data.get("relationships"), dict):
-                    info["relationships"].update(data["relationships"])
-                break
+            if isinstance(data, dict) and data:
+                loaded_paths.append(ont_path)
+                datas.append(data)
+
+    if datas:
+        data = merge_ontologies(datas)
+        info["loaded"] = True
+        info["custom_path"] = str(loaded_paths[0])
+        info["custom_paths"] = [str(p) for p in loaded_paths]
+        if isinstance(datas[0].get("ontology"), dict):
+            info["custom_id"] = datas[0]["ontology"].get("id")
+        if "namespaces" in data:
+            ns_list = []
+            _collect_namespaces(data["namespaces"], "", ns_list)
+            info["namespaces"].extend(n for n in ns_list if n not in info["namespaces"])
+        for name in _extract_entity_type_names(data):
+            if name not in info["entity_types"]:
+                info["entity_types"].append(name)
+        if isinstance(data.get("traits"), dict):
+            info["traits"].update(data["traits"])
+        if isinstance(data.get("relationships"), dict):
+            info["relationships"].update(data["relationships"])
 
     return info

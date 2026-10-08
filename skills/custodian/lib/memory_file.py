@@ -9,7 +9,7 @@ try:
 except ImportError:
     yaml = None  # type: ignore[assignment]
 
-from lib.mif_compat import get_nested_compat, parse_body_relationships, target_ref
+from lib.mif_compat import get_nested_compat, is_concept_target, parse_body_relationships, target_ref
 
 # Required MIF fields
 REQUIRED_FIELDS = {"id", "type", "title", "created"}
@@ -153,9 +153,10 @@ class MemoryFile:
                     tid = target_ref(rel.get("target"))
                     if tid and tid not in targets:
                         targets.append(tid)
-        # MIF 1.4.1 body mirror (markdown links); wiki-links are handled below
+        # MIF 1.4.1 body mirror (markdown links to urn:mif:<uuid>); ordinary
+        # prose links in the section are not relationships. Wiki-links below.
         for entry in parse_body_relationships(self._body):
-            if entry["form"] != "markdown":
+            if entry["form"] != "markdown" or not is_concept_target(entry["target"]):
                 continue
             tid = target_ref(entry["target"])
             if tid and tid not in targets:

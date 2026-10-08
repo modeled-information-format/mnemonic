@@ -27,8 +27,10 @@ logger = logging.getLogger(__name__)
 def _mif_ontology_files(directory: Path) -> List[Path]:
     """``ontology.yaml`` plus every ``*.ontology.yaml`` in a ``.mif/ontologies/`` dir.
 
-    Kept local (rather than importing ``lib.paths``) so this skill library
-    stays importable on its own.
+    Deliberate copy of ``lib.paths.mif_ontology_files``: this skill library
+    is also imported with only ``skills/ontology/lib`` on ``sys.path``, where
+    the top-level ``lib`` package is not importable. Keep the two in sync
+    (``tests/unit/test_mif_141_alignment.py`` asserts they agree).
     """
     try:
         if not directory.is_dir():
@@ -150,49 +152,63 @@ class OntologyLoader:
 
         return ontology
 
-    def load_project_ontology(
+    def load_project_ontologies(
         self,
         org: str = "default",
         project: Optional[str] = None,
-    ) -> Optional[LoadedOntology]:
-        """Load project-specific ontology if available."""
+    ) -> List[LoadedOntology]:
+        """Load every project and user ontology, highest precedence first.
+
+        Order: ``./.mif/ontologies/`` files, legacy ``./.claude/mnemonic/ontology.yaml``,
+        ``~/.mif/ontologies/`` files, then the first legacy user ontology
+        (``~/.claude/mnemonic/{org}/{project}/ontology.yaml`` or
+        ``~/.claude/mnemonic/{org}/ontology.yaml``).
+        """
         import re
 
         # Security: Validate org and project contain only safe characters
         if not re.match(r"^[a-zA-Z0-9_-]+$", org):
             logger.warning(f"Invalid org name contains unsafe characters: {org}")
-            return None
+            return []
         if project and not re.match(r"^[a-zA-Z0-9_-]+$", project):
             logger.warning(f"Invalid project name contains unsafe characters: {project}")
-            return None
+            return []
 
-        # Project-level ontology: MIF 1.4.1 location first, then legacy
-        for project_path in _mif_ontology_files(Path.cwd() / ".mif" / "ontologies"):
-            loaded = self.load_ontology(project_path)
-            if loaded:
-                return loaded
-        project_path = Path.cwd() / ".claude" / "mnemonic" / "ontology.yaml"
-        if project_path.exists():
-            return self.load_ontology(project_path)
-
-        # User-level ontology: MIF 1.4.1 location
-        for user_mif_path in _mif_ontology_files(Path.home() / ".mif" / "ontologies"):
-            loaded = self.load_ontology(user_mif_path)
-            if loaded:
-                return loaded
-
-        # User-level ontology (org/project specific)
+        candidates: List[Path] = []
+        # Project-level: MIF 1.4.1 location first, then legacy
+        candidates.extend(_mif_ontology_files(Path.cwd() / ".mif" / "ontologies"))
+        candidates.append(Path.cwd() / ".claude" / "mnemonic" / "ontology.yaml")
+        # User-level: MIF 1.4.1 location first, then the first legacy file found
+        candidates.extend(_mif_ontology_files(Path.home() / ".mif" / "ontologies"))
+        legacy_user = []
         if project:
-            user_path = Path.home() / ".claude" / "mnemonic" / org / project / "ontology.yaml"
-            if user_path.exists():
-                return self.load_ontology(user_path)
+            legacy_user.append(Path.home() / ".claude" / "mnemonic" / org / project / "ontology.yaml")
+        legacy_user.append(Path.home() / ".claude" / "mnemonic" / org / "ontology.yaml")
+        for legacy in legacy_user:
+            if legacy.exists():
+                candidates.append(legacy)
+                break
 
-        # User-level ontology (org only)
-        user_path = Path.home() / ".claude" / "mnemonic" / org / "ontology.yaml"
-        if user_path.exists():
-            return self.load_ontology(user_path)
+        loaded: List[LoadedOntology] = []
+        for path in candidates:
+            if path.exists():
+                ontology = self.load_ontology(path)
+                if ontology:
+                    loaded.append(ontology)
+        return loaded
 
-        return None
+    def load_project_ontology(
+        self,
+        org: str = "default",
+        project: Optional[str] = None,
+    ) -> Optional[LoadedOntology]:
+        """Load the highest-precedence project or user ontology, if any.
+
+        See :meth:`load_project_ontologies` for the order; use that method
+        to get every applicable ontology.
+        """
+        ontologies = self.load_project_ontologies(org, project)
+        return ontologies[0] if ontologies else None
 
     def get_all_discovery_patterns(
         self,
@@ -210,10 +226,10 @@ class OntologyLoader:
         if base and base.discovery_enabled:
             patterns.extend(base.discovery_patterns)
 
-        # Project ontology patterns
-        proj = self.load_project_ontology(org, project)
-        if proj and proj.discovery_enabled:
-            patterns.extend(proj.discovery_patterns)
+        # Project and user ontology patterns (every applicable file)
+        for ontology in self.load_project_ontologies(org, project):
+            if ontology.discovery_enabled:
+                patterns.extend(ontology.discovery_patterns)
 
         self._merged_patterns = patterns
         return patterns

@@ -570,7 +570,8 @@ def validate_memory(
                             severity="warning",
                         )
                     )
-                if not body_has_relationship(body, str(rel_type), str(target)):
+                # target may be a str or a JSON-LD {"@id": ...} node
+                if not body_has_relationship(body, str(rel_type), target):
                     result.warnings.append(
                         ValidationError(
                             file=str(file_path),

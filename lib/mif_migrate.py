@@ -27,29 +27,34 @@ changes values it cannot map mechanically (legacy ``sourceType`` values,
 missing ``citationRole``), and leaves a key alone when its camelCase twin
 already exists. Those cases are reported as notes for a human.
 
-When frontmatter is unchanged it is kept byte-for-byte; when it changes it
-is re-serialized with ruamel.yaml in round-trip mode, which keeps key order,
-comments and quoting.
+When frontmatter is unchanged it is kept as-is; when it changes it is
+re-serialized with ruamel.yaml in round-trip mode, which keeps key order,
+comments and quoting. CRLF files are written back with CRLF, and file
+permissions are preserved.
 """
 
 import io
 import re
+import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from lib.mif_compat import (
+    LEGACY_TOP_LEVEL_FIELDS,
     MIF_SOURCE_TYPES,
     UUID_PATTERN,
     WIKI_REL_LINE_RE,
+    _comment_items,
     _rename_key,
     _section_span,
     format_target,
     get_compat,
+    is_concept_target,
     is_kebab_type,
+    is_relationship_type,
     migrate_legacy_keys,
     parse_body_relationships,
-    pop_key_keep_comments,
     render_relationship_line,
     same_target,
     target_ref,
@@ -68,11 +73,7 @@ BACKUP_SUFFIX = ".pre-mif-1.4.1.bak"
 
 # Top-level fields written by older capture templates -> (container path, key)
 TOP_LEVEL_NESTING: Dict[str, Tuple[Tuple[str, ...], str]] = {
-    "confidence": (("provenance",), "confidence"),
-    "strength": (("temporal", "decay"), "strength"),
-    "half_life": (("temporal", "decay"), "halfLife"),
-    "decay_model": (("temporal", "decay"), "model"),
-    "last_accessed": (("temporal",), "lastAccessed"),
+    old: (tuple(new.split(".")[:-1]), new.split(".")[-1]) for old, new in LEGACY_TOP_LEVEL_FIELDS.items()
 }
 
 WIKI_LINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
@@ -91,8 +92,9 @@ class FilePlan:
     changes: List[str] = field(default_factory=list)
     notes: List[str] = field(default_factory=list)
     error: Optional[str] = None
-    original_text: Optional[str] = None
-    new_text: Optional[str] = None
+    original_text: Optional[str] = None  # newline-normalized (LF)
+    new_text: Optional[str] = None  # LF; written with CRLF if the file used CRLF
+    crlf: bool = False
 
     @property
     def changed(self) -> bool:
@@ -161,6 +163,35 @@ def _resolve_wiki_target(index: Dict[str, Dict[str, str]], raw: str) -> Optional
     return None
 
 
+def _move_key(src: Any, old: str, dst: Any, new: str, src_indent: int, dst_indent: int) -> None:
+    """Move ``src[old]`` to ``dst[new]`` without losing its YAML comments.
+
+    ruamel.yaml attaches a key's end-of-line comment, plus any full-line
+    comments after it, to that key. The end-of-line comment follows the value
+    to its new location (as a comment line above ``new``); trailing full-line
+    comments stay where they were, above the next key of ``src``.
+    """
+    items = _comment_items(src)
+    token = items.pop(old, None) if items is not None else None
+    pos = list(src.keys()).index(old)
+    dst[new] = src.pop(old)
+    if not token or len(token) < 3 or token[2] is None:
+        return
+    lines = str(token[2].value).split("\n")
+    eol = lines[0].strip().lstrip("#").strip()
+    trailing = [line.strip().lstrip("#").strip() for line in lines[1:] if line.strip()]
+    remaining = list(src.keys())
+    nxt = remaining[pos] if pos < len(remaining) else None
+    if trailing and nxt is None:
+        # Nothing follows in src: keep the trailing lines with the moved value
+        eol = "\n".join([eol] + trailing) if eol else "\n".join(trailing)
+        trailing = []
+    if eol and hasattr(dst, "yaml_set_comment_before_after_key"):
+        dst.yaml_set_comment_before_after_key(new, before=eol, indent=dst_indent)
+    if trailing and hasattr(src, "yaml_set_comment_before_after_key"):
+        src.yaml_set_comment_before_after_key(nxt, before="\n".join(trailing), indent=src_indent)
+
+
 def _ensure_map(parent: Any, key: str) -> Any:
     child = parent.get(key)
     if child is None:
@@ -188,7 +219,7 @@ def _nest_top_level(fm: Any, changes: List[str], notes: List[str]) -> None:
         if get_compat(container, new_key) is not None:
             notes.append(f"kept top-level {old}: {dotted} already present")
             continue
-        container[new_key] = pop_key_keep_comments(fm, old)
+        _move_key(fm, old, container, new_key, src_indent=0, dst_indent=2 * len(container_path))
         changes.append(f"{old} -> {dotted}")
 
 
@@ -206,7 +237,11 @@ def _migrate_relationships(fm: Any, changes: List[str], notes: List[str]) -> Lis
         if rtype and not is_kebab_type(str(rtype)):
             rel["type"] = to_kebab(str(rtype))
             changes.append(f"relationships[{i}].type {rtype} -> {rel['type']}")
-        if isinstance(target, str) and target.strip() != format_target(target):
+        if isinstance(target, dict) and isinstance(target.get("@id"), str):
+            # JSON-LD node form {"@id": ...} -> the plain string form
+            rel["target"] = format_target(target_ref(target))
+            changes.append(f"relationships[{i}].target {{'@id'}} -> {rel['target']}")
+        elif isinstance(target, str) and target.strip() != format_target(target):
             rel["target"] = format_target(target)
             changes.append(f"relationships[{i}].target -> {rel['target']}")
         if "label" in rel:
@@ -216,9 +251,9 @@ def _migrate_relationships(fm: Any, changes: List[str], notes: List[str]) -> Lis
             elif isinstance(meta, dict) and meta.get("label") is not None:
                 notes.append(f"relationships[{i}].label kept: metadata.label already present")
             else:
-                label = pop_key_keep_comments(rel, "label")
                 meta = _ensure_map(rel, "metadata")
-                meta["label"] = label
+                # list items sit at column 4 (sequence indent 4, offset 2)
+                _move_key(rel, "label", meta, "label", src_indent=4, dst_indent=6)
                 changes.append(f"relationships[{i}].label -> metadata.label")
         if rel.get("type") and isinstance(rel.get("target"), str):
             edges.append((str(rel["type"]), str(rel["target"])))
@@ -289,9 +324,14 @@ def _migrate_body(
             body = updated
 
     # Body edges with no frontmatter entry
+    # Only lines that are unambiguously MIF edges qualify: a known relationship
+    # type and a concept target (urn:mif:<uuid>). Ordinary prose links such as
+    # "- Related [RFC](https://...)" are left alone.
     body_only: List[Tuple[str, str]] = []
     for entry in parse_body_relationships(body):
         if entry["form"] != "markdown":
+            continue
+        if not is_concept_target(entry["target"]) or not is_relationship_type(entry["type"]):
             continue
         if not any(to_kebab(t) == to_kebab(entry["type"]) and same_target(tg, entry["target"]) for t, tg in edges):
             body_only.append((to_kebab(entry["type"]), format_target(entry["target"])))
@@ -303,10 +343,12 @@ def plan_file(path: Path, index: Optional[Dict[str, Dict[str, str]]] = None) -> 
     plan = FilePlan(path=path)
     index = index or {}
     try:
-        text = path.read_text(encoding="utf-8")
+        raw = path.read_bytes()
+        text = raw.decode("utf-8").replace("\r\n", "\n")
     except Exception as exc:
         plan.error = f"unreadable: {exc}"
         return plan
+    plan.crlf = b"\r\n" in raw
     plan.original_text = text
     parts = split_document(text)
     if parts is None:
@@ -365,7 +407,7 @@ def plan_file(path: Path, index: Optional[Dict[str, Dict[str, str]]] = None) -> 
             new_fm += "\n"
         plan.new_text = f"---\n{new_fm}---\n{new_body}"
     else:
-        # Frontmatter untouched: keep it (and its delimiters) byte-for-byte
+        # Frontmatter untouched: keep it (and its delimiters) as written
         plan.new_text = text[: len(text) - len(body)] + new_body
     return plan
 
@@ -379,10 +421,12 @@ def apply_plan(plan: FilePlan, backup: bool = True) -> Optional[Path]:
     if backup:
         backup_path = path.with_name(path.name + BACKUP_SUFFIX)
         if not backup_path.exists():  # keep the oldest original
-            backup_path.write_bytes(path.read_bytes())
+            shutil.copy2(str(path), str(backup_path))  # keeps permissions
+    data = plan.new_text.replace("\n", "\r\n") if plan.crlf else plan.new_text
     tmp = path.with_name(path.name + ".mif-migrate.tmp")
     try:
-        tmp.write_text(plan.new_text, encoding="utf-8")
+        tmp.write_bytes(data.encode("utf-8"))
+        shutil.copymode(str(path), str(tmp))  # a 0600 memory stays 0600
         tmp.replace(path)
     finally:
         if tmp.exists():

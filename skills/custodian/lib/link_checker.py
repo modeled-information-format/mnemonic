@@ -214,7 +214,7 @@ def ensure_bidirectional(
         Count of missing back-references found.
     """
     try:
-        from lib.mif_compat import same_target, to_kebab
+        from lib.mif_compat import same_target, target_ref, to_kebab
         from lib.relationships import add_relationship, get_inverse, is_symmetric, is_valid_type
     except ImportError:
         report.warning("bidirectional", "lib.relationships not available, skipping bidirectional check")
@@ -237,7 +237,8 @@ def ensure_bidirectional(
                 continue
 
             rel_type = rel.get("type", "")
-            target_id = rel.get("target", "")
+            # str, urn:mif:<uuid>, or a JSON-LD {"@id": ...} node
+            target_id = target_ref(rel.get("target", ""))
             if not rel_type or not target_id:
                 continue
 

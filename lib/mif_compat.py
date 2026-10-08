@@ -29,6 +29,7 @@ This module is stdlib-only and Python 3.8 compatible: it is imported by
 hooks, tools and the custodian skill.
 """
 
+import copy
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -67,6 +68,17 @@ LEGACY_KEY_ALIASES: Dict[str, Dict[str, str]] = {
         "source_text": "sourceText",
         "vector_uri": "vectorUri",
     },
+}
+
+# Top-level fields older mnemonic capture templates wrote, which MIF 1.4.1
+# places under provenance / temporal / temporal.decay. Still tolerated on
+# read; tools/mnemonic-migrate-mif nests them. Maps to the MIF 1.4.1 path.
+LEGACY_TOP_LEVEL_FIELDS: Dict[str, str] = {
+    "confidence": "provenance.confidence",
+    "strength": "temporal.decay.strength",
+    "half_life": "temporal.decay.halfLife",
+    "decay_model": "temporal.decay.model",
+    "last_accessed": "temporal.lastAccessed",
 }
 
 # MIF 1.4.1 provenance.sourceType enum (spec section 12.1).
@@ -130,6 +142,9 @@ def find_legacy_keys(frontmatter: Any) -> List[Tuple[str, str]]:
         for old, new in aliases.items():
             if old in container:
                 found.append((prefix + old, prefix + new))
+    for old, new in LEGACY_TOP_LEVEL_FIELDS.items():
+        if old in frontmatter:
+            found.append((old, new))
     return found
 
 
@@ -149,33 +164,6 @@ def _comment_items(mapping: Any) -> Optional[Dict[Any, Any]]:
     ca = getattr(mapping, "ca", None)
     items = getattr(ca, "items", None)
     return items if isinstance(items, dict) else None
-
-
-def pop_key_keep_comments(mapping: Any, key: str) -> Any:
-    """Pop ``key`` without losing a ruamel.yaml comment attached to it.
-
-    ruamel attaches a key's end-of-line comment, and any full-line comments
-    that follow it, to that key. Popping the key would drop them, so they
-    are re-attached to the preceding key (merged if it has its own).
-    """
-    items = _comment_items(mapping)
-    if items is None or key not in items:
-        return mapping.pop(key)
-    keys = list(mapping.keys())
-    pos = keys.index(key)
-    token = items.pop(key)
-    value = mapping.pop(key)
-    if pos > 0:
-        prev = keys[pos - 1]
-        existing = items.get(prev)
-        if existing is None:
-            items[prev] = token
-        elif len(existing) > 2 and len(token) > 2 and token[2] is not None:
-            if existing[2] is None:
-                existing[2] = token[2]
-            else:
-                existing[2].value = existing[2].value + token[2].value
-    return value
 
 
 def _rename_key(mapping: Any, old: str, new: str) -> None:
@@ -222,6 +210,44 @@ def migrate_legacy_keys(frontmatter: Any) -> Tuple[List[str], List[str]]:
             _rename_key(container, old, new)
             changes.append(f"{prefix}{old} -> {prefix}{new}")
     return changes, conflicts
+
+
+# ---------------------------------------------------------------------------
+# Ontology merging (MIF 1.4.1 section 10.8.5)
+# ---------------------------------------------------------------------------
+
+
+def _merge_value(high: Any, low: Any) -> Any:
+    if isinstance(high, dict) and isinstance(low, dict):
+        for key, value in low.items():
+            high[key] = _merge_value(high[key], value) if key in high else copy.deepcopy(value)
+        return high
+    if isinstance(high, list) and isinstance(low, list):
+        named = {item.get("name") for item in high if isinstance(item, dict) and item.get("name")}
+        for item in low:
+            if isinstance(item, dict) and item.get("name"):
+                if item["name"] in named:
+                    continue  # higher-precedence definition wins
+            elif item in high:
+                continue
+            high.append(copy.deepcopy(item))
+        return high
+    return high
+
+
+def merge_ontologies(datas: List[Any]) -> Dict[str, Any]:
+    """Merge parsed ontology documents, highest precedence first.
+
+    Spec section 10.8.5: later (lower-precedence) sources are extended or
+    overridden by earlier ones. Mappings merge recursively with the earlier
+    value winning on conflict; lists are unioned (named entries such as
+    ``entity_types`` deduplicated by ``name``). Inputs are not modified.
+    """
+    merged: Dict[str, Any] = {}
+    for data in datas:
+        if isinstance(data, dict):
+            _merge_value(merged, data)
+    return merged
 
 
 # ---------------------------------------------------------------------------
@@ -300,6 +326,44 @@ def same_target(a: Any, b: Any) -> bool:
     return ra == rb
 
 
+def is_concept_target(target: Any) -> bool:
+    """True for a reference to a MIF concept by id (``urn:mif:<uuid>`` or a
+    bare UUID), as opposed to an arbitrary URL or path."""
+    return bool(UUID_PATTERN.match(target_ref(target)))
+
+
+# MIF 1.4.1 core relationship tokens (section 8.2), forward and inverse
+CORE_RELATIONSHIP_TOKENS = frozenset(
+    {
+        "relates-to",
+        "derived-from",
+        "derives",
+        "supersedes",
+        "superseded-by",
+        "conflicts-with",
+        "part-of",
+        "contains",
+        "implements",
+        "implemented-by",
+        "uses",
+        "used-by",
+        "created",
+        "created-by",
+        "mentioned-in",
+        "mentions",
+    }
+)
+
+
+def is_relationship_type(rel_type: Any) -> bool:
+    """True for a core MIF relationship type in any accepted spelling, or a
+    namespaced custom type (``ns:type``)."""
+    token = to_kebab(str(rel_type or ""))
+    if token in CORE_RELATIONSHIP_TOKENS:
+        return True
+    return ":" in token and is_kebab_type(token)
+
+
 def relationship_label(rel: Any) -> Optional[str]:
     """Return a relationship's label from ``metadata.label`` (1.4.1) or the
     legacy top-level ``label``."""
@@ -368,7 +432,7 @@ def render_relationship_line(rel_type: str, target: str, text: Optional[str] = N
     return f"- {to_kebab(rel_type)} [{shown}]({format_target(target)})"
 
 
-def body_has_relationship(body: str, rel_type: str, target: str) -> bool:
+def body_has_relationship(body: str, rel_type: str, target: Any) -> bool:
     """True if the body already mirrors this edge (either form)."""
     want_type = to_kebab(rel_type)
     for entry in parse_body_relationships(body):

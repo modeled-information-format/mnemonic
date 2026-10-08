@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from lib.mif_compat import find_legacy_keys, to_kebab
+from lib.mif_compat import find_legacy_keys, merge_ontologies, to_kebab
 
 from .memory_file import MemoryFile
 from .report import Report
@@ -314,21 +314,30 @@ def validate_relationships(
 
 
 def load_ontology(ontology_paths: List[Path]) -> Optional[Dict[str, Any]]:
-    """Load the first available ontology file.
+    """Load and merge every available ontology file.
+
+    ``ontology_paths`` is in precedence order (``PathResolver.get_ontology_paths``:
+    MIF ``.mif/ontologies/`` files before the legacy locations, project before
+    user). All existing files are merged, earlier ones winning on conflict, so
+    a multi-file ``.mif/ontologies/`` directory and a legacy
+    ``ontology.yaml`` both contribute their relationship types.
 
     Args:
         ontology_paths: Ordered list of paths to check
 
     Returns:
-        Parsed ontology data or None
+        Merged ontology data, or None if no file could be loaded
     """
     if yaml is None:
         return None
+    datas = []
     for ont_path in ontology_paths:
         if ont_path.exists():
             try:
                 with open(ont_path) as f:
-                    return yaml.safe_load(f)
+                    data = yaml.safe_load(f)
             except Exception:
                 continue
-    return None
+            if isinstance(data, dict):
+                datas.append(data)
+    return merge_ontologies(datas) if datas else None

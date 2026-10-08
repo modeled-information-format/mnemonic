@@ -49,7 +49,8 @@ def mif_ontology_files(directory: Path) -> List[Path]:
 
     Returns ``ontology.yaml`` (if present) followed by every
     ``*.ontology.yaml`` beneath the directory, sorted. Missing or unreadable
-    directories yield an empty list.
+    directories yield an empty list. Mirrored by ``_mif_ontology_files`` in
+    ``skills/ontology/lib/ontology_loader.py``; keep them in sync.
     """
     try:
         if not directory.is_dir():

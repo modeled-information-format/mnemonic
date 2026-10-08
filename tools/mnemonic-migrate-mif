@@ -89,7 +89,12 @@ def main(argv=None) -> int:
     if args.apply:
         for plan in plans:
             if plan.changed:
-                backup = apply_plan(plan, backup=not args.no_backup)
+                try:
+                    backup = apply_plan(plan, backup=not args.no_backup)
+                except OSError as exc:
+                    # Keep going: report this file, leave it (and others) intact
+                    plan.error = f"write failed, file left unchanged: {exc}"
+                    continue
                 written.append((plan, backup))
 
     errors = [p for p in plans if p.error]

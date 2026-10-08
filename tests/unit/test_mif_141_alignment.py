@@ -649,3 +649,195 @@ def test_module_is_stdlib_only():
     source = Path(mif_compat.__file__).read_text()
     for name in ("yaml", "ruamel", "jsonschema"):
         assert f"import {name}" not in source
+
+
+# ---------------------------------------------------------------------------
+# Review follow-ups (PR #45)
+# ---------------------------------------------------------------------------
+
+
+class TestReviewFollowUps:
+    def test_dict_target_is_not_duplicated_by_migration(self, tmp_path):
+        pytest.importorskip("ruamel.yaml")
+        from lib.mif_migrate import plan_file
+
+        extra = f'relationships:\n  - type: relates_to\n    target: {{"@id": "urn:mif:{UUID_B}"}}\n'
+        body = f"Body.\n\n## Relationships\n\n- relates-to [B](urn:mif:{UUID_B})\n"
+        mem = _memory(tmp_path / "a.memory.md", UUID_A, "A", extra=extra, body=body)
+        plan = plan_file(mem)
+        assert not any("(from body)" in c for c in plan.changes)
+        assert f"target: urn:mif:{UUID_B}" in plan.new_text
+        assert plan.new_text.count(f"urn:mif:{UUID_B}") == 2  # one frontmatter entry, one body line
+
+    def test_prose_links_are_not_relationships(self, tmp_path):
+        pytest.importorskip("ruamel.yaml")
+        from lib.mif_migrate import plan_file
+        from skills.custodian.lib.memory_file import MemoryFile
+
+        body = "Body.\n\n## Relationships\n\n- Related [RFC](https://example.com/rfc)\n"
+        mem = _memory(tmp_path / "a.memory.md", UUID_A, "A", body=body)
+        assert not plan_file(mem).changed
+        assert MemoryFile(mem).find_relationship_targets() == []
+
+    def test_moved_first_key_keeps_its_comment(self, tmp_path):
+        pytest.importorskip("ruamel.yaml")
+        from lib.mif_migrate import plan_file
+
+        mem = _write(
+            tmp_path / "a.memory.md",
+            f'---\nconfidence: 0.9  # how sure\n# about the title\ntitle: "x"\nid: {UUID_A}\n---\n\nBody\n',
+        )
+        text = plan_file(mem).new_text
+        assert "provenance:\n  # how sure\n  confidence: 0.9" in text
+        assert '# about the title\ntitle: "x"' in text
+
+    def test_crlf_and_permissions_preserved(self, tmp_path):
+        pytest.importorskip("ruamel.yaml")
+        import os
+        import stat
+
+        from lib.mif_migrate import apply_plan, plan_file
+
+        mem = tmp_path / "a.memory.md"
+        mem.write_bytes(
+            f"---\r\nid: {UUID_A}\r\ntitle: A\r\nrelationships:\r\n  - type: relates_to\r\n    target: {UUID_B}\r\n---\r\n\r\nBody.\r\n".encode()
+        )
+        os.chmod(mem, 0o600)
+        apply_plan(plan_file(mem))
+        data = mem.read_bytes()
+        assert b"relates-to" in data
+        assert b"\n" not in data.replace(b"\r\n", b"")  # every newline is still CRLF
+        assert stat.S_IMODE(mem.stat().st_mode) == 0o600
+
+    def test_cli_reports_write_failure_and_continues(self, legacy_store):
+        import os
+
+        if os.geteuid() == 0:
+            pytest.skip("root ignores directory permissions")
+        os.chmod(legacy_store, 0o500)  # files readable, directory not writable
+        try:
+            result = subprocess.run(
+                [sys.executable, str(TOOLS / "mnemonic-migrate-mif"), str(legacy_store), "--apply", "--json"],
+                capture_output=True,
+                text=True,
+            )
+        finally:
+            os.chmod(legacy_store, 0o700)
+        assert result.returncode == 1
+        report = json.loads(result.stdout)
+        assert any("write failed" in (f["error"] or "") for f in report["files"])
+        assert (legacy_store / "decision.memory.md").read_text() == LEGACY_MEMORY
+
+    @needs_yaml
+    def test_decay_does_not_compound(self, tmp_path):
+        from skills.custodian.lib.decay import update_decay
+        from skills.custodian.lib.memory_file import MemoryFile
+        from skills.custodian.lib.report import Report
+
+        extra = "temporal:\n  lastAccessed: 2020-01-01T00:00:00Z\n  decay:\n    model: linear\n    halfLife: P100000D\n    strength: 1.0\n"
+        mem = _memory(tmp_path / "a.memory.md", UUID_A, "A", extra=extra)
+        update_decay([tmp_path], Report("test"))
+        first = float(MemoryFile(mem).get_nested("temporal", "decay", "strength"))
+        update_decay([tmp_path], Report("test"))
+        second = float(MemoryFile(mem).get_nested("temporal", "decay", "strength"))
+        assert first < 1.0
+        assert second == first
+
+    @needs_yaml
+    def test_ensure_bidirectional_handles_jsonld_target(self, tmp_path):
+        from skills.custodian.lib.link_checker import LinkIndex, ensure_bidirectional
+        from skills.custodian.lib.report import Report
+
+        _memory(
+            tmp_path / "a.memory.md",
+            UUID_A,
+            "A",
+            extra=f'relationships:\n  - type: relates-to\n    target: {{"@id": "urn:mif:{UUID_B}"}}\n',
+        )
+        _memory(tmp_path / "b.memory.md", UUID_B, "B")
+        index = LinkIndex()
+        index.build([tmp_path])
+        assert ensure_bidirectional(index, Report("test"), fix=False) == 1
+
+    @needs_yaml
+    def test_validator_dict_target_and_top_level_legacy_fields(self, tmp_path):
+        mem = _write(
+            tmp_path / "a.memory.md",
+            f'---\nid: {UUID_A}\ntype: semantic\nnamespace: decisions/project\ncreated: 2026-01-01T00:00:00Z\ntitle: "T"\n'
+            f'confidence: 0.9\nrelationships:\n  - type: relates-to\n    target: {{"@id": "urn:mif:{UUID_B}"}}\n---\n\n'
+            f"Body.\n\n## Relationships\n\n- relates-to [B](urn:mif:{UUID_B})\n",
+        )
+        _, out = _validate(str(mem))
+        fields = {w["field"] for r in out["results"] for w in r["warnings"]}
+        assert "relationships[0]" not in fields
+        assert "confidence" in fields
+
+    @needs_yaml
+    def test_custodian_merges_all_ontology_files(self, tmp_path):
+        from skills.custodian.lib.report import Report
+        from skills.custodian.lib.validators import load_ontology, validate_relationships
+
+        a = _write(tmp_path / "a.ontology.yaml", "ontology: {id: a}\nrelationships:\n  depends_on: {}\n")
+        b = _write(tmp_path / "b.ontology.yaml", "ontology: {id: b}\nrelationships:\n  caused_by: {}\n")
+        legacy = _write(tmp_path / "ontology.yaml", "ontology: {id: legacy}\nrelationships:\n  resolves: {}\n")
+        data = load_ontology([a, b, legacy, tmp_path / "missing.yaml"])
+        assert data["ontology"]["id"] == "a"
+        assert set(data["relationships"]) == {"depends_on", "caused_by", "resolves"}
+
+        store = tmp_path / "store"
+        store.mkdir()
+        _memory(
+            store / "m.memory.md",
+            UUID_A,
+            "M",
+            extra=f"relationships:\n  - type: caused-by\n    target: urn:mif:{UUID_B}\n  - type: resolves\n    target: urn:mif:{UUID_C}\n",
+        )
+        assert validate_relationships([store], Report("test"), data) == 0
+
+    @needs_yaml
+    def test_loader_returns_every_applicable_ontology(self, tmp_path, monkeypatch):
+        sys.path.insert(0, str(project_root / "skills" / "ontology" / "lib"))
+        from skills.ontology.lib.ontology_loader import OntologyLoader
+
+        project = tmp_path / "project"
+        home = tmp_path / "home"
+        (project / ".mif" / "ontologies").mkdir(parents=True)
+        (project / ".claude" / "mnemonic").mkdir(parents=True)
+        (home / ".mif" / "ontologies").mkdir(parents=True)
+        for path, oid in (
+            (project / ".mif" / "ontologies" / "a.ontology.yaml", "proj-a"),
+            (project / ".mif" / "ontologies" / "b.ontology.yaml", "proj-b"),
+            (project / ".claude" / "mnemonic" / "ontology.yaml", "proj-legacy"),
+            (home / ".mif" / "ontologies" / "u.ontology.yaml", "user-mif"),
+        ):
+            _write(path, f"ontology:\n  id: {oid}\n  version: 1.0.0\n")
+        monkeypatch.chdir(project)
+        monkeypatch.setenv("HOME", str(home))
+        loader = OntologyLoader(plugin_root=project_root / "skills" / "ontology")
+        ids = [o.id for o in loader.load_project_ontologies("org", "proj")]
+        assert ids == ["proj-a", "proj-b", "proj-legacy", "user-mif"]
+        assert loader.load_project_ontology("org", "proj").id == "proj-a"
+
+    def test_ontology_file_helpers_agree(self, tmp_path):
+        sys.path.insert(0, str(project_root / "skills" / "ontology" / "lib"))
+        from lib.paths import mif_ontology_files
+        from skills.ontology.lib.ontology_loader import _mif_ontology_files
+
+        (tmp_path / "x").mkdir()
+        for rel in ("ontology.yaml", "a.ontology.yaml", "x/b.ontology.yaml", "notes.yaml"):
+            _write(tmp_path / rel, "ontology: {id: t}\n")
+        assert mif_ontology_files(tmp_path) == _mif_ontology_files(tmp_path)
+        assert [p.name for p in mif_ontology_files(tmp_path)] == ["ontology.yaml", "a.ontology.yaml", "b.ontology.yaml"]
+
+    def test_merge_ontologies_precedence(self):
+        from lib.mif_compat import merge_ontologies
+
+        high = {"ontology": {"id": "hi"}, "entity_types": [{"name": "x", "base": "semantic"}], "traits": {"t": 1}}
+        low = {
+            "ontology": {"id": "lo", "version": "2"},
+            "entity_types": [{"name": "x", "base": "episodic"}, {"name": "y"}],
+        }
+        merged = merge_ontologies([high, low])
+        assert merged["ontology"] == {"id": "hi", "version": "2"}
+        assert merged["entity_types"] == [{"name": "x", "base": "semantic"}, {"name": "y"}]
+        assert high["entity_types"] == [{"name": "x", "base": "semantic"}]  # inputs untouched
