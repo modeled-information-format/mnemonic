@@ -33,7 +33,7 @@ Run `/mnemonic:list --namespaces` to see available namespaces from loaded ontolo
 ## Workflow
 
 1. **Load Ontology**
-   - Read `.claude/mnemonic/ontology.yaml`
+   - Read the project ontology: `.mif/ontologies/*.ontology.yaml` (MIF 1.4.1), falling back to `.claude/mnemonic/ontology.yaml`
    - Extract discovery patterns
 
 2. **Scan Codebase**

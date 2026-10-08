@@ -439,30 +439,34 @@ from lib.relationships import add_bidirectional_relationship
 add_bidirectional_relationship(
     source_path="decision-a.memory.md",
     target_path="decision-b.memory.md",
-    rel_type="supersedes",  # snake_case or PascalCase
+    rel_type="supersedes",  # kebab-case, snake_case or PascalCase
     label="Replaced by new approach"
 )
 
-# Creates:
-# - decision-a.memory.md: supersedes -> decision-b
-# - decision-b.memory.md: superseded_by -> decision-a
+# Creates (MIF 1.4.1 form):
+# - decision-a.memory.md: supersedes -> urn:mif:<decision-b uuid>
+# - decision-b.memory.md: superseded-by -> urn:mif:<decision-a uuid>
 ````
 
 **API Reference**:
 
-#### `add_relationship(memory_path, rel_type, target_id, label=None)`
-Add single relationship to frontmatter.
+#### `add_relationship(memory_path, rel_type, target_id, label=None, target_title=None)`
+Add a single relationship in MIF 1.4.1 form: a frontmatter entry
+(`type: <kebab-case>`, `target: urn:mif:<uuid>`, optional `metadata.label`)
+plus its body mirror line `- <type> [<target_title>](urn:mif:<uuid>)` under
+`## Relationships`.
 
 **Args**:
 - `memory_path` (str): Memory file to modify
-- `rel_type` (str): Relationship type (snake_case or PascalCase)
-- `target_id` (str): Target memory UUID
-- `label` (str, optional): Human-readable description
+- `rel_type` (str): Relationship type (kebab-case, snake_case or PascalCase)
+- `target_id` (str): Target memory UUID (or `urn:mif:` id)
+- `label` (str, optional): Human-readable description (`metadata.label`)
+- `target_title` (str, optional): Link text for the body mirror line
 
 **Validation**:
 - Checks type is valid via `is_valid_type()`
-- For asymmetric types, rejects inverse direction
-- Prevents duplicate relationships
+- Prevents duplicate relationships, treating legacy spellings
+  (`relates_to`, bare-UUID targets, `[[uuid]]` body lines) as duplicates
 
 ---
 
@@ -472,16 +476,16 @@ Add bidirectional relationship pair.
 **Args**:
 - `source_path` (str): Source memory file path
 - `target_path` (str): Target memory file path
-- `rel_type` (str): Relationship type (snake_case or PascalCase)
+- `rel_type` (str): Relationship type (kebab-case, snake_case or PascalCase)
 - `label` (str, optional): Human-readable description
 
 **Returns**:
 Tuple of (forward_success, inverse_success) booleans.
 
 **Automatic Inverse**:
-- `supersedes` → creates `superseded_by` back-reference
-- `relates_to` → creates `relates_to` (symmetric)
-- `derived_from` → creates `derives` back-reference
+- `supersedes` → creates `superseded-by` back-reference
+- `relates-to` → creates `relates-to` (symmetric)
+- `derived-from` → creates `derives` back-reference
 
 **Example**:
 ````python
@@ -495,13 +499,16 @@ add_bidirectional_relationship(
 # Frontmatter updates:
 # new-approach.memory.md:
 #   relationships:
-#     - type: Supersedes
-#       target: <old-uuid>
+#     - type: supersedes
+#       target: urn:mif:<old-uuid>
 #
 # old-approach.memory.md:
 #   relationships:
-#     - type: SupersededBy
-#       target: <new-uuid>
+#     - type: superseded-by
+#       target: urn:mif:<new-uuid>
+#
+# Each file also gains a body line under "## Relationships", e.g.
+#   - supersedes [Old Approach](urn:mif:<old-uuid>)
 ````
 
 ---
@@ -512,6 +519,7 @@ add_bidirectional_relationship(
 from lib.relationships import (
     to_pascal,
     to_snake,
+    to_token,
     get_inverse,
     is_valid_type,
     is_symmetric,
@@ -521,6 +529,7 @@ from lib.relationships import (
 # Convert naming
 to_pascal("supersedes")        # → "Supersedes"
 to_snake("SupersededBy")       # → "superseded_by"
+to_token("SupersededBy")       # → "superseded-by" (MIF 1.4.1 written form)
 
 # Get inverse
 get_inverse("Supersedes")      # → "SupersededBy"
@@ -540,9 +549,10 @@ get_all_valid_types()
 ````
 
 **Design Notes**:
-- MIF Section 8.2 compliant
-- PascalCase in frontmatter (MIF standard)
-- snake_case for backward compatibility
+- MIF 1.4.1 sections 8.1.1 / 8.2 compliant
+- Written form is the kebab-case token (`superseded-by`); PascalCase is the
+  registry/display name
+- PascalCase and snake_case are accepted on input for backward compatibility
 - Automatic bidirectional linking
 - Validation prevents invalid relationships
 - Used by capture workflow, gc compression, custodian

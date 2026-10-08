@@ -2,7 +2,11 @@
 applyTo: "**/*.memory.md"
 ---
 
-# Memory File Guidelines (MIF Level 3)
+# Memory File Guidelines (MIF 1.4.1 Level 3)
+
+Concept frontmatter keys are camelCase (MIF 1.4.1 section 3.3). Legacy
+snake_case keys (`valid_from`, `source_type`, `compressed_at`) in older
+memories are still read; do not introduce them in new or edited files.
 
 ## Required Frontmatter Fields
 
@@ -22,12 +26,12 @@ tags: [tag1, tag2]            # Categorization tags
 
 ```yaml
 temporal:
-  valid_from: <ISO8601>       # When content became valid
-  valid_until: <ISO8601>      # When content expires (optional)
-  recorded_at: <ISO8601>      # When it was recorded
+  validFrom: <ISO8601>       # When content became valid
+  validUntil: <ISO8601>      # When content expires (optional)
+  recordedAt: <ISO8601>      # When it was recorded
   decay:
     model: exponential        # Decay model type
-    half_life: P7D            # ISO 8601 duration
+    halfLife: P7D            # ISO 8601 duration
     strength: 0.85            # Current strength 0.0-1.0
 ```
 
@@ -35,7 +39,7 @@ temporal:
 
 ```yaml
 provenance:
-  source_type: user_explicit|inferred|conversation
+  sourceType: user_explicit | user_implicit | agent_inferred | external_import | system_generated
   agent: model-identifier     # e.g., claude-opus-4
   confidence: 0.9             # Confidence score 0.0-1.0
 ```
@@ -53,3 +57,24 @@ After frontmatter, use standard Markdown:
 - Clear sections for context, details, implications
 - Code blocks with language specification
 - Links to related memories or external resources
+
+## Relationships
+
+Relationships are authoritative in frontmatter and mirrored as Markdown links
+under `## Relationships` (MIF 1.4.1 section 5.3):
+
+```yaml
+relationships:
+  - type: relates-to                 # kebab-case token, not relates_to
+    target: urn:mif:<target-uuid>
+    metadata:
+      label: "Optional note"
+```
+
+```markdown
+## Relationships
+
+- relates-to [Target Title](urn:mif:<target-uuid>)
+```
+
+Do not use `[[uuid]]` wiki-links for relationships.

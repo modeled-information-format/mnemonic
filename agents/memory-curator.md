@@ -72,11 +72,11 @@ Identify memories with highly similar content (excluding frontmatter). Compare f
 
 ### 3. Decay Management
 
-Update strength scores based on time and access patterns. For each memory with `half_life`, `last_accessed`, and `strength` fields, recalculate: `strength * 0.5^(days_since_access / half_life_days)`. Update the file if the change exceeds 0.01.
+Update strength scores based on time and access patterns. For each memory with `temporal.decay.halfLife`, `temporal.lastAccessed`, and `temporal.decay.strength` fields (legacy files may spell them `half_life` / `last_accessed`; read either, write the camelCase form), recalculate: `strength * 0.5^(days_since_access / half_life_days)`. Update the file if the change exceeds 0.01.
 
 ### 4. Relationship Integrity
 
-Verify all `[[id]]` memory links resolve to existing files. Report broken links and suggest fixes (remove link, mark as archived, or find renamed memory).
+Verify every relationship target resolves to an existing memory: frontmatter `relationships[].target` (`urn:mif:<uuid>`, or a bare UUID in legacy files), the matching Markdown links under `## Relationships`, and legacy `[[id]]` wiki-links. Every frontmatter relationship should have a body link (MIF 1.4.1 section 5.3). Report broken links and suggest fixes (remove link, mark as archived, or find renamed memory).
 
 ### 5. Cleanup Operations
 

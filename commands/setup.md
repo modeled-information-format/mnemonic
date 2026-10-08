@@ -234,10 +234,10 @@ tags:
   - setup
   - initialization
 temporal:
-  valid_from: ${DATE}
-  recorded_at: ${DATE}
+  validFrom: ${DATE}
+  recordedAt: ${DATE}
 provenance:
-  source_type: system
+  sourceType: system_generated
   agent: claude-opus-4
   confidence: 1.0
 ---

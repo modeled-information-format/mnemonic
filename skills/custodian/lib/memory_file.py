@@ -9,6 +9,8 @@ try:
 except ImportError:
     yaml = None  # type: ignore[assignment]
 
+from lib.mif_compat import get_nested_compat, is_concept_target, parse_body_relationships, target_ref
+
 # Required MIF fields
 REQUIRED_FIELDS = {"id", "type", "title", "created"}
 VALID_TYPES = {"semantic", "episodic", "procedural"}
@@ -88,7 +90,11 @@ class MemoryFile:
         return self._frontmatter.get(key, default)
 
     def get_nested(self, *keys: str, default: Any = None) -> Any:
-        """Get a nested value, e.g. get_nested('temporal', 'decay', 'model')."""
+        """Get a nested value, e.g. get_nested('temporal', 'decay', 'model').
+
+        Keys are matched exactly; use :meth:`get_compat` for fields whose
+        legacy snake_case spelling should also be accepted.
+        """
         obj: Any = self._frontmatter
         for k in keys:
             if isinstance(obj, dict):
@@ -96,6 +102,11 @@ class MemoryFile:
             else:
                 return default
         return obj if obj is not None else default
+
+    def get_compat(self, *keys: str, default: Any = None) -> Any:
+        """Nested lookup preferring MIF 1.4.1 camelCase keys, falling back to
+        the legacy snake_case spelling, e.g. get_compat('temporal', 'lastAccessed')."""
+        return get_nested_compat(self._frontmatter, *keys, default=default)
 
     @property
     def uuid(self) -> Optional[str]:
@@ -128,20 +139,29 @@ class MemoryFile:
         return WIKI_LINK_PATTERN.findall(self._body)
 
     def find_relationship_targets(self) -> List[str]:
-        """Extract relationship target IDs from frontmatter."""
+        """Extract relationship target IDs (``urn:mif:`` prefix stripped).
+
+        Reads the frontmatter ``relationships`` array, MIF 1.4.1 markdown
+        links in the body ``## Relationships`` section, and legacy
+        ``[[wiki-link]]`` references anywhere in the file.
+        """
         targets: List[str] = []
         rels = self.get("relationships")
         if isinstance(rels, list):
             for rel in rels:
                 if isinstance(rel, dict):
-                    target = rel.get("target")
-                    if isinstance(target, dict):
-                        tid = target.get("@id", "")
-                        if tid:
-                            targets.append(str(tid).replace("urn:mif:", ""))
-                    elif isinstance(target, str):
-                        targets.append(target.replace("urn:mif:", ""))
-        # Also check inline relationship notation in body
+                    tid = target_ref(rel.get("target"))
+                    if tid and tid not in targets:
+                        targets.append(tid)
+        # MIF 1.4.1 body mirror (markdown links to urn:mif:<uuid>); ordinary
+        # prose links in the section are not relationships. Wiki-links below.
+        for entry in parse_body_relationships(self._body):
+            if entry["form"] != "markdown" or not is_concept_target(entry["target"]):
+                continue
+            tid = target_ref(entry["target"])
+            if tid and tid not in targets:
+                targets.append(tid)
+        # Also check legacy inline relationship notation in body
         for link in WIKI_LINK_PATTERN.findall(self._raw):
             if link not in targets:
                 targets.append(link)

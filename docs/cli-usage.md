@@ -207,10 +207,10 @@ tags:
   - architecture
   - database
 temporal:
-  valid_from: ${DATE}
-  recorded_at: ${DATE}
+  validFrom: ${DATE}
+  recordedAt: ${DATE}
 provenance:
-  source_type: manual
+  sourceType: user_explicit
   agent: cli
   confidence: 0.9
 ---
@@ -256,10 +256,10 @@ title: "${TITLE}"
 tags:
   - manual
 temporal:
-  valid_from: ${DATE}
-  recorded_at: ${DATE}
+  validFrom: ${DATE}
+  recordedAt: ${DATE}
 provenance:
-  source_type: manual
+  sourceType: user_explicit
   agent: cli
   confidence: 0.9
 ---

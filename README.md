@@ -11,12 +11,12 @@ A pure filesystem-based memory system for Claude Code. No external dependencies 
   <img src=".github/readme-infographic.png" alt="Mnemonic Architecture" width="800">
 </p>
 
-> **Note**: This plugin implements the [Memory Interchange Format (MIF)](https://mif-spec.dev) specification for standardized AI memory storage. MIF defines a portable, human-readable format for persistent AI memories.
+> **Note**: This plugin implements the [Modeled Information Format (MIF)](https://mif-spec.dev) specification, version 1.4.1, as an AI-memory store (the use case MIF's AI Memory profile describes). MIF defines a portable, human-readable Markdown-plus-YAML format for knowledge.
 
 ## Features
 
 - **Pure Filesystem**: All memories stored as markdown files with YAML frontmatter
-- **MIF Level 3 Compliant**: Standardized Memory Interchange Format
+- **MIF 1.4.1 Level 3**: New memories are written in Modeled Information Format 1.4.1 form; memories written by earlier releases keep working (see [MIF 1.4.1 alignment](#mif-141-alignment))
 - **Skill-First Architecture**: Skills work standalone without hooks or libraries
 - **Cognitive Memory Types**: Semantic, episodic, and procedural memories
 - **Custom Ontologies**: Extend with domain-specific entity types and relationships
@@ -126,22 +126,23 @@ tags:
   - database
   - architecture
 temporal:
-  valid_from: 2026-01-23T00:00:00Z
-  recorded_at: 2026-01-23T10:30:00Z
+  validFrom: 2026-01-23T00:00:00Z
+  recordedAt: 2026-01-23T10:30:00Z
   decay:
     model: exponential
-    half_life: P7D
+    halfLife: P7D
     strength: 0.85
 provenance:
-  source_type: conversation
+  sourceType: user_explicit
   agent: claude-opus-4
   confidence: 0.95
 relationships:
-  - type: relates_to
-    target: a5e46807-6883-4fb2-be45-09872ae1a994
-    label: "Related caching decision"
+  - type: relates-to
+    target: urn:mif:a5e46807-6883-4fb2-be45-09872ae1a994
+    metadata:
+      label: "Related caching decision"
   - type: supersedes
-    target: b6f57918-7994-5gc3-cf56-10983bf2b005
+    target: urn:mif:b6f57918-7994-4dc3-af56-10983bf2b005
 ---
 
 # Use PostgreSQL for Storage
@@ -152,7 +153,43 @@ We decided to use PostgreSQL for our data storage needs.
 - Strong ACID compliance
 - Excellent JSON support
 - Mature ecosystem
+
+## Relationships
+
+- relates-to [Use Redis for caching](urn:mif:a5e46807-6883-4fb2-be45-09872ae1a994)
+- supersedes [Use SQLite for storage](urn:mif:b6f57918-7994-4dc3-af56-10983bf2b005)
 ```
+
+### MIF 1.4.1 alignment
+
+New memories use the MIF 1.4.1 forms shown above: camelCase frontmatter keys
+(`validFrom`, `sourceType`, `compressedAt`, ...), kebab-case relationship
+types (`relates-to`), `urn:mif:<uuid>` relationship targets, and every
+frontmatter relationship mirrored as a Markdown link under `## Relationships`.
+
+Memories written by earlier mnemonic releases are **still read as-is**:
+snake_case keys (`valid_from`, `compressed_at`), `relates_to`/`RelatesTo`
+types, bare-UUID targets, and `[[uuid]]` wiki-links all resolve to the same
+values. `make validate-memories` reports them as warnings, never errors.
+
+To upgrade old files in place, use the opt-in migration tool. It only
+previews unless you pass `--apply`, and writes a `.pre-mif-1.4.1.bak` copy of
+every file it changes:
+
+```bash
+tools/mnemonic-migrate-mif                 # dry run over all memory roots
+tools/mnemonic-migrate-mif path/to/dir     # dry run over one directory
+tools/mnemonic-migrate-mif --apply         # rewrite in place (with backups)
+```
+
+Memory files keep the `{slug}.memory.md` name. MIF 1.4.1 calls the `.memory`
+infix legacy, but every mnemonic search, hook and tool globs `*.memory.md`, so
+renaming is out of scope for this tool.
+
+Custom ontologies are resolved from MIF's locations first (project
+`.mif/ontologies/`, then user `~/.mif/ontologies/`, both `*.ontology.yaml`),
+falling back to the earlier `.claude/mnemonic/ontology.yaml` and
+`${MNEMONIC_ROOT}/.../ontology.yaml` locations.
 
 ## Memory Types
 
@@ -183,10 +220,14 @@ Mnemonic uses a cognitive triad namespace hierarchy:
 Extend mnemonic with domain-specific entity types, relationships, and discovery:
 
 ```bash
-# Copy the software-engineering ontology
+# Copy the software-engineering ontology into the project's MIF ontology dir
+mkdir -p .mif/ontologies
 cp skills/ontology/fallback/ontologies/examples/software-engineering.ontology.yaml \
-   .claude/mnemonic/ontology.yaml
+   .mif/ontologies/
 ```
+
+(`~/.mif/ontologies/` applies an ontology to every project. The older
+`.claude/mnemonic/ontology.yaml` location is still read as a fallback.)
 
 This adds:
 - Custom sub-namespaces (architecture, components, deployments)
@@ -391,6 +432,7 @@ mnemonic/
 │       └── ontologies/     # Base ontology and examples
 ├── tools/
 │   ├── mnemonic-validate   # MIF schema validation
+│   ├── mnemonic-migrate-mif # Opt-in legacy -> MIF 1.4.1 rewrite (dry run by default)
 │   ├── mnemonic-query      # Structured queries
 │   └── mnemonic-paths      # Path resolution CLI
 ├── tests/
@@ -433,7 +475,7 @@ make check-deps
 
 ## Related Projects
 
-- **[MIF (Memory Interchange Format)](https://mif-spec.dev)** - The specification this plugin implements. An open standard for portable AI memory storage. Schemas: https://mif-spec.dev/schema/
+- **[MIF (Modeled Information Format)](https://mif-spec.dev)** - The specification this plugin implements (1.4.1). An open, OKF-compatible standard for portable knowledge; mnemonic uses its AI Memory profile. Schemas: https://mif-spec.dev/schema/
 
 ## License
 

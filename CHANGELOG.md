@@ -7,7 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Part of the coordinated MIF (Modeled Information Format) 1.4.1 release.
+Memories written by earlier releases keep working unchanged: every legacy
+form below is still read, and validators report it as a warning, never an
+error.
+
+### Changed
+
+- **[MIF 1.4.1 write forms]**: New memories, templates and library writers
+  use MIF 1.4.1 spellings
+  - camelCase concept frontmatter keys (MIF 1.4.1 section 3.3): `validFrom`,
+    `recordedAt`, `lastAccessed`, `decay.halfLife`, `provenance.sourceType`,
+    `compressedAt`, `codeRefs`, ...
+  - `provenance.sourceType` values from the MIF enum (`user_explicit`,
+    `user_implicit`, `agent_inferred`, `external_import`, `system_generated`)
+  - capture templates nest `confidence`, `strength`, `halfLife`,
+    `lastAccessed` and the decay model under `provenance` / `temporal`
+    instead of writing them at the top level
+  - relationships: kebab-case type tokens (`relates-to`, `superseded-by`),
+    `urn:mif:<uuid>` targets, `metadata.label`, and every frontmatter
+    relationship mirrored as a Markdown link under `## Relationships`
+    (section 5.3) instead of `[[uuid]]` wiki-links
+  - citations: `citationType`, `citationRole`, `"@type": Citation`
+- **[Tolerant readers]**: New `lib/mif_compat.py` resolves legacy and new
+  spellings identically, preferring the new one. Used by the memory reader,
+  relationship writer (legacy entries count as duplicates), custodian
+  (decay, validators, link checker, bidirectional check) and
+  `mnemonic-validate`
+- **[Ontology resolution]**: Ontologies load from MIF 1.4.1 locations first
+  (project `.mif/ontologies/`, user `~/.mif/ontologies/`, `ontology.yaml` or
+  `*.ontology.yaml`), falling back to the previous
+  `.claude/mnemonic/ontology.yaml` and `${MNEMONIC_ROOT}/.../ontology.yaml`
+  locations (section 10.8.5)
+- **[Vendored ontology schema]**: `skills/ontology/fallback/schema/ontology/`
+  re-vendored verbatim from MIF 1.4.1; the previous copy matched no MIF
+  release
+- **[Naming]**: "MIF" is the *Modeled Information Format* (was misnamed
+  "Memory Interchange Format" in README, docs, ADR-002)
+- **[mnemonic-validate]**: Warns (does not fail) on legacy keys, legacy
+  `sourceType` values, non-kebab relationship types, relationship `label`
+  outside `metadata`, unmirrored relationships, wiki-link relationship lines
+  and citations without `citationType` / `citationRole`; validates
+  `compressedAt` in either spelling
+
 ### Added
+
+- **[mnemonic-migrate-mif]**: Opt-in tool that upgrades legacy memory files
+  to the MIF 1.4.1 forms above. Dry run by default; `--apply` writes each
+  changed file atomically after saving `<file>.pre-mif-1.4.1.bak`. Never
+  renames files, never guesses values (legacy `sourceType` values, missing
+  `citationRole`), and never overwrites a key whose camelCase twin exists.
+  Not run automatically
 
 - **[Semantic Search]**: QMD integration for vector and hybrid search
   - New skill `/mnemonic:qmd-setup` for automated setup

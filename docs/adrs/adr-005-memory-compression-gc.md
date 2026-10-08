@@ -10,7 +10,7 @@ tags:
   - maintenance
 status: accepted
 created: 2026-01-24
-updated: 2026-01-24
+updated: 2026-10-08
 author: zircote
 project: mnemonic
 technologies:
@@ -221,3 +221,14 @@ Extending gc with compression achieves:
 **Findings:** N/A - New ADR
 
 **Action Required:** Implement compression-worker agent and gc extension
+
+### 2026-10-08
+
+**Status:** Amended for MIF 1.4.1
+
+**Findings:** MIF 1.4.1 (section 5.6) names the compression timestamp
+`compressedAt`. New compressions write `compressedAt`; the
+`compressed_at` key shown under *Storage Format* is the pre-1.4.1 spelling
+and is still read.
+
+**Action Required:** None.

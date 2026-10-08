@@ -28,6 +28,14 @@
           "type": "string",
           "description": "URL to external schema definition",
           "format": "uri"
+        },
+        "extends": {
+          "type": "array",
+          "description": "List of ontology IDs this ontology extends (inherits traits and relationships)",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          }
         }
       }
     },
@@ -68,33 +76,33 @@
           "description": "Whether discovery is enabled",
           "default": false
         },
-        "patterns": {
-          "type": "array",
-          "description": "Discovery patterns for entity suggestion (domain ontologies)",
-          "items": {
-            "$ref": "#/$defs/discoveryPattern"
-          }
-        },
-        "content_patterns": {
-          "type": "array",
-          "description": "Content patterns for namespace suggestion (base ontology)",
-          "items": {
-            "$ref": "#/$defs/contentPattern"
-          }
-        },
-        "file_patterns": {
-          "type": "array",
-          "description": "File patterns for namespace suggestion (base ontology)",
-          "items": {
-            "$ref": "#/$defs/filePattern"
-          }
-        },
         "confidence_threshold": {
           "type": "number",
           "description": "Minimum confidence for suggestions",
           "minimum": 0,
           "maximum": 1,
           "default": 0.8
+        },
+        "content_patterns": {
+          "type": "array",
+          "description": "Patterns matched against user prompts and memory content",
+          "items": {
+            "$ref": "#/$defs/contentPattern"
+          }
+        },
+        "file_patterns": {
+          "type": "array",
+          "description": "Patterns matched against file paths being edited",
+          "items": {
+            "$ref": "#/$defs/filePattern"
+          }
+        },
+        "patterns": {
+          "type": "array",
+          "description": "Unified patterns array (alternative to separate content/file arrays)",
+          "items": {
+            "$ref": "#/$defs/unifiedPattern"
+          }
         }
       }
     }
@@ -152,6 +160,42 @@
             "type": "string"
           }
         },
+        "subtype_of": {
+          "type": "array",
+          "description": "Names of parent entity types this type specializes (subsumption). A subtype is substitutable for any of its supertypes wherever the supertype is admissible (e.g. a relationship endpoint domain); its schema must remain compatible with each parent's (additive). Parents may be declared in this ontology or in an ontology it extends, and the subtype_of graph must be acyclic.",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "aliases": {
+          "type": "array",
+          "description": "Synonyms and label variations for this entity type (SKOS altLabel analog), as a structured field distinct from description. Embedding-based classifiers concatenate aliases into the type's positive embedding document alongside description and exemplars.",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "exemplars": {
+          "type": "array",
+          "description": "Curated canonical example phrases or instances of this entity type (SKOS example analog; 2-5 recommended), distinct from description. A second, example-grounded positive embedding signal for classifiers.",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "negative_examples": {
+          "type": "array",
+          "description": "Curated near-miss examples drawn from this ontology's most confusable type pairs: texts that resemble this entity type but do NOT denote it. For decision-boundary sharpening only; never concatenated into the positive embedding document. Must be human-curated, not auto-mined.",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
         "schema": {
           "type": "object",
           "description": "JSON Schema for entity fields",
@@ -178,6 +222,13 @@
       "properties": {
         "description": {
           "type": "string"
+        },
+        "extends": {
+          "type": "array",
+          "description": "List of trait names this trait extends (inherits fields from)",
+          "items": {
+            "type": "string"
+          }
         },
         "fields": {
           "type": "object",
@@ -223,9 +274,37 @@
         }
       }
     },
-    "discoveryPattern": {
+    "contentPattern": {
       "type": "object",
-      "description": "Pattern for discovering entities (domain ontologies)",
+      "description": "Pattern matched against user prompts and memory content",
+      "required": ["pattern"],
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern to match in content"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Namespace to suggest (hierarchical path)"
+        },
+        "namespaces": {
+          "type": "array",
+          "description": "Multiple namespaces to suggest",
+          "items": { "type": "string" }
+        },
+        "suggest_entity": {
+          "type": "string",
+          "description": "Entity type to suggest when pattern matches"
+        },
+        "context": {
+          "type": "string",
+          "description": "Human-readable context hint"
+        }
+      }
+    },
+    "unifiedPattern": {
+      "type": "object",
+      "description": "Unified pattern with content_pattern or file_pattern discriminator",
       "properties": {
         "content_pattern": {
           "type": "string",
@@ -235,50 +314,39 @@
           "type": "string",
           "description": "Glob pattern to match file paths"
         },
-        "suggest_entity": {
-          "type": "string",
-          "description": "Entity type to suggest when pattern matches"
-        },
         "suggest_namespace": {
           "type": "string",
-          "description": "Namespace to suggest (hierarchical path like _semantic/decisions)"
-        }
-      }
-    },
-    "contentPattern": {
-      "type": "object",
-      "description": "Content pattern for namespace suggestion (base ontology)",
-      "required": ["pattern", "namespace"],
-      "properties": {
-        "pattern": {
-          "type": "string",
-          "description": "Regex pattern to match in user prompts or content"
+          "description": "Namespace to suggest"
         },
-        "namespace": {
+        "suggest_entity": {
           "type": "string",
-          "description": "Namespace to suggest (hierarchical path like _semantic/decisions)"
+          "description": "Entity type to suggest"
         }
       }
     },
     "filePattern": {
       "type": "object",
-      "description": "File pattern for namespace suggestion (base ontology)",
+      "description": "Pattern matched against file paths being edited",
       "required": ["pattern"],
       "properties": {
         "pattern": {
           "type": "string",
-          "description": "Regex or glob pattern to match file paths"
+          "description": "Regex pattern to match in file paths"
         },
         "namespaces": {
           "type": "array",
-          "description": "Namespaces to suggest when pattern matches",
+          "description": "Namespaces to suggest (hierarchical paths)",
           "items": {
             "type": "string"
           }
         },
         "context": {
           "type": "string",
-          "description": "Context hint for the match (e.g., 'authentication', 'database')"
+          "description": "Human-readable context hint for this pattern"
+        },
+        "suggest_entity": {
+          "type": "string",
+          "description": "Entity type to suggest when pattern matches"
         }
       }
     },

@@ -2,6 +2,22 @@
 
 All notable changes to the ontology schema are documented in this file.
 
+## [MIF 1.4.1] - 2026-10-08
+
+### Changed
+- Re-vendored `ontology.schema.json` and `ontology.context.jsonld` verbatim
+  from MIF 1.4.1 (`public/schema/1.4.1/ontology/`). The previous copies were
+  local edits that matched no MIF release.
+- JSON-LD context vocabulary moved to `https://mif-spec.dev/ns/ontology#`
+  (`mif:` prefix is now `https://mif-spec.dev/ns/`).
+
+### Added (from MIF)
+- `ontology.extends`, entity-type `subtype_of`, `aliases`, `exemplars`,
+  `negative_examples`, and a unified discovery `patterns` array.
+
+Both bundled ontologies (`mif-base`, `software-engineering`) validate against
+the new schema unchanged.
+
 ## [v2] - 2026-01-27
 
 ### Added

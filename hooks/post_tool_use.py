@@ -13,6 +13,7 @@ from pathlib import Path
 # Add project root to path for lib imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from lib.mif_compat import to_kebab
 from lib.ontology import load_file_patterns, load_ontology_data
 from lib.search import (
     detect_namespace_for_file,
@@ -81,8 +82,11 @@ def get_relationship_suggestions(ontology_data: dict, file_path: str, namespace:
             "tags": result.get("tags", []),
         }
 
-        rel_type = infer_relationship_type(
-            source_title=path_keywords, source_namespace=namespace, source_tags=[], target_metadata=target_metadata
+        # Suggest the MIF 1.4.1 kebab-case token (e.g. relates-to) so agents write it
+        rel_type = to_kebab(
+            infer_relationship_type(
+                source_title=path_keywords, source_namespace=namespace, source_tags=[], target_metadata=target_metadata
+            )
         )
 
         # Format: [rel_type] Title (id: short-id, score: N)

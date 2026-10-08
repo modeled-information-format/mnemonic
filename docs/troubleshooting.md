@@ -470,7 +470,7 @@ from lib.relationships import add_bidirectional_relationship
 add_bidirectional_relationship(
     source_path="/path/to/source.memory.md",
     target_path="/path/to/target.memory.md",
-    rel_type="relates_to"
+    rel_type="relates-to"
 )
 EOF
 ````
@@ -491,16 +491,17 @@ print(valid_types)
 # Use valid type from ontology
 ````
 
-Valid default types:
-- `relates_to` / `RelatesTo`
-- `derived_from` / `DerivedFrom` (inverse: `Derives`)
-- `supersedes` / `Supersedes` (inverse: `SupersededBy`)
-- `conflicts_with` / `ConflictsWith`
-- `part_of` / `PartOf` (inverse: `Contains`)
-- `uses` / `Uses` (inverse: `UsedBy`)
-- `implements` / `Implements` (inverse: `ImplementedBy`)
-- `created` / `Created` (inverse: `CreatedBy`)
-- `mentioned_in` / `MentionedIn` (inverse: `Mentions`)
+Valid default types (MIF 1.4.1 token / registry name; legacy snake_case
+spellings such as `relates_to` are still accepted on read):
+- `relates-to` / `RelatesTo`
+- `derived-from` / `DerivedFrom` (inverse: `derives`)
+- `supersedes` / `Supersedes` (inverse: `superseded-by`)
+- `conflicts-with` / `ConflictsWith`
+- `part-of` / `PartOf` (inverse: `contains`)
+- `uses` / `Uses` (inverse: `used-by`)
+- `implements` / `Implements` (inverse: `implemented-by`)
+- `created` / `Created` (inverse: `created-by`)
+- `mentioned-in` / `MentionedIn` (inverse: `mentions`)
 
 ## Getting Help
 

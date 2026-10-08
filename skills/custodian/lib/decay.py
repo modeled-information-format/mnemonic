@@ -83,10 +83,8 @@ def update_decay(roots: List[Path], report: Report, dry_run: bool = False) -> in
             if model == "none":
                 continue
 
-            half_life_str = mem.get_nested("temporal", "decay", "halfLife", default="")
-            if not half_life_str:
-                # Also try half_life (snake_case variant)
-                half_life_str = mem.get_nested("temporal", "decay", "half_life", default="")
+            # halfLife (MIF 1.4.1), falling back to legacy half_life
+            half_life_str = mem.get_compat("temporal", "decay", "halfLife", default="")
             if not half_life_str:
                 report.warning(
                     "decay",
@@ -111,7 +109,8 @@ def update_decay(roots: List[Path], report: Report, dry_run: bool = False) -> in
             current_strength = float(current_str) if current_str is not None else 1.0
 
             # Get last access time
-            last_accessed_str = mem.get_nested("temporal", "last_accessed", default=None)
+            # lastAccessed (MIF 1.4.1), falling back to legacy last_accessed
+            last_accessed_str = mem.get_compat("temporal", "lastAccessed", default=None)
             if last_accessed_str is None:
                 # Fall back to created date
                 last_accessed_str = mem.get("created", "")
@@ -126,7 +125,15 @@ def update_decay(roots: List[Path], report: Report, dry_run: bool = False) -> in
                 continue
 
             days_since = (now - last_accessed).total_seconds() / 86400.0
-            new_strength = calculate_strength(days_since, half_life_days, current_strength, str(model))
+            # Strength is a function of time since last access, so compute it
+            # from full strength rather than from the stored, already-decayed
+            # value: re-applying the whole interval on every run compounded the
+            # decay. min() keeps a strength someone deliberately set lower, and
+            # makes repeated runs idempotent.
+            new_strength = min(
+                current_strength,
+                calculate_strength(days_since, half_life_days, 1.0, str(model)),
+            )
             new_strength = round(new_strength, 4)
 
             if abs(new_strength - current_strength) < 0.005:

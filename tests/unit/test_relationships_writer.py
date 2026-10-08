@@ -33,9 +33,9 @@ class TestAddRelationship:
         assert result is True
         content = mem.read_text()
         assert "relationships:" in content
-        assert "  - type: relates_to" in content
+        assert "  - type: relates-to" in content
         assert "    target: bbb-222" in content
-        assert '    label: "Related memory"' in content
+        assert "    metadata:\n      label: \"Related memory\"" in content
 
     def test_add_to_file_with_existing_relationships(self, tmp_path):
         """Append to existing relationships section."""
@@ -62,7 +62,7 @@ class TestAddRelationship:
         assert result is True
         content = mem.read_text()
         assert "relationships: []" not in content
-        assert "  - type: derived_from" in content
+        assert "  - type: derived-from" in content
         assert "    target: eee-555" in content
 
     def test_skip_duplicate(self, tmp_path):
@@ -153,7 +153,7 @@ class TestAddRelationship:
 
         assert result is True
         content = mem.read_text()
-        assert "type: Supersedes" in content
+        assert "type: supersedes" in content
 
 
 class TestAddBidirectionalRelationship:
@@ -175,9 +175,9 @@ class TestAddBidirectionalRelationship:
         target_content = target.read_text()
 
         assert "target: bbb-222" in source_content
-        assert "type: relates_to" in source_content
+        assert "type: relates-to" in source_content
         assert "target: aaa-111" in target_content
-        assert "type: relates_to" in target_content
+        assert "type: relates-to" in target_content
 
     def test_bidirectional_supersedes_proper_inverse(self, tmp_path):
         """supersedes creates superseded_by back-link (not relates_to)."""
@@ -199,7 +199,7 @@ class TestAddBidirectionalRelationship:
         assert "target: bbb-222" in source_content
 
         # Reverse: superseded_by (proper inverse, not relates_to)
-        assert "type: superseded_by" in target_content
+        assert "type: superseded-by" in target_content
         assert "target: aaa-111" in target_content
         assert "Back-link:" in target_content
 
@@ -218,7 +218,7 @@ class TestAddBidirectionalRelationship:
         source_content = source.read_text()
         target_content = target.read_text()
 
-        assert "type: derived_from" in source_content
+        assert "type: derived-from" in source_content
         assert "type: derives" in target_content
 
     def test_nonexistent_source(self, tmp_path):

@@ -116,7 +116,7 @@ Namespaces: `_semantic/decisions` | `_semantic/knowledge` | `_procedural/pattern
 
 2. If matches found, read the top result
 3. If it covers the same topic → UPDATE existing memory (use Edit tool) instead of creating new
-4. If related but different → create new memory with `relates_to` relationship
+4. If related but different → create new memory with a `relates-to` relationship
 5. Only create brand new if no matches found
 
 ## Recall
@@ -152,14 +152,18 @@ title: "Your actual title here"
 type: semantic
 namespace: _semantic/decisions
 created: <the real DATE generated above>
-confidence: 0.9
-strength: 1.0
-half_life: P90D
-last_accessed: <the real DATE generated above>
-decay_model: exponential
+temporal:
+  validFrom: <the real DATE generated above>
+  recordedAt: <the real DATE generated above>
+  lastAccessed: <the real DATE generated above>
+  decay:
+    model: exponential
+    halfLife: P90D
+    strength: 1.0
 provenance:
-  source_type: conversation
+  sourceType: agent_inferred   # user_explicit if the user stated it directly
   agent: claude
+  confidence: 0.9
 ---
 
 # Your actual title here

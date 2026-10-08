@@ -51,7 +51,8 @@ class TestGetRelationshipSuggestions:
         result = get_relationship_suggestions(ontology_data, "/src/auth_handler.py", "_semantic/decisions")
 
         assert result != ""
-        assert "RelatesTo" in result
+        # Suggestions use the MIF 1.4.1 kebab-case token agents should write
+        assert "[relates-to]" in result
         assert "JWT Authentication Decision" in result
         assert "a5e46807-688" in result
         assert "score: 65" in result
@@ -132,8 +133,8 @@ class TestGetRelationshipSuggestions:
         assert "Memory 1" in result
         assert "Memory 2" in result
         assert "Memory 3" in result
-        assert "Supersedes" in result
-        assert "RelatesTo" in result
+        assert "[supersedes]" in result
+        assert "[relates-to]" in result
 
     @patch("hooks.post_tool_use.find_related_memories_scored")
     @patch("hooks.post_tool_use.extract_keywords_from_path")
@@ -158,7 +159,7 @@ class TestGetRelationshipSuggestions:
         result = get_relationship_suggestions(ontology_data, "/src/config.py", "_semantic/decisions")
 
         assert result.startswith("\nSuggested relationships")
-        assert "RelatesTo" in result
+        assert "[relates-to]" in result
         assert "Config Setup" in result
 
 
