@@ -60,9 +60,10 @@ procedural/            # Step-by-step processes
 ### 1. Copy the software-engineering ontology
 
 ```bash
-# Copy the bundled software-engineering ontology
+# Copy the bundled software-engineering ontology into the project's MIF ontology dir
+mkdir -p .mif/ontologies
 cp skills/ontology/fallback/ontologies/examples/software-engineering.ontology.yaml \
-   .claude/mnemonic/ontology.yaml
+   .mif/ontologies/
 ```
 
 ### 2. Capture a memory with a hierarchical namespace
@@ -167,7 +168,9 @@ relationships:
 
 ## Defining an Ontology
 
-Create `.claude/mnemonic/ontology.yaml`:
+Create `.mif/ontologies/my-domain.ontology.yaml` (project) or
+`~/.mif/ontologies/my-domain.ontology.yaml` (all projects). The legacy
+`.claude/mnemonic/ontology.yaml` location is still read as a fallback.
 
 ```yaml
 ---
@@ -220,13 +223,18 @@ discovery:
 
 ### Ontology File Locations
 
-Resolution order (later overrides earlier):
+Resolution order follows MIF 1.4.1 section 10.8.5 (later overrides earlier).
+Within each scope the MIF location is checked first and the location used by
+earlier mnemonic releases is kept as a fallback, so existing ontologies keep
+loading without being moved:
 
 | Location | Scope | Notes |
 |----------|-------|-------|
 | `skills/ontology/fallback/` | Bundled | Base MIF ontologies (cognitive triad) |
-| `${MNEMONIC_ROOT}/{org}/{project}/ontology.yaml` | User | Org/project specific |
-| `.claude/mnemonic/ontology.yaml` | Project | Current project |
+| `~/.mif/ontologies/*.ontology.yaml` (or `ontology.yaml`) | User | MIF 1.4.1 location |
+| `${MNEMONIC_ROOT}/{org}/ontology.yaml`, `${MNEMONIC_ROOT}/{org}/{project}/ontology.yaml` | User | Legacy fallback |
+| `.mif/ontologies/*.ontology.yaml` (or `ontology.yaml`) | Project | MIF 1.4.1 location |
+| `.claude/mnemonic/ontology.yaml` | Project | Legacy fallback |
 
 Project ontologies can extend or override base definitions.
 
@@ -361,12 +369,12 @@ Claude: Created technology entity `postgres-user-data` with:
 ### Validate an Ontology File
 
 ```bash
-python skills/ontology/lib/ontology_validator.py .claude/mnemonic/ontology.yaml
+python skills/ontology/lib/ontology_validator.py .mif/ontologies/my-domain.ontology.yaml
 ```
 
 Output:
 ```
-Validating: .claude/mnemonic/ontology.yaml
+Validating: .mif/ontologies/my-domain.ontology.yaml
 Status: VALID
 ```
 

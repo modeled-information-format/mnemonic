@@ -1,6 +1,16 @@
 # MIF Ontology Schema
 
-This directory contains the schema definitions for MIF ontology files.
+This directory contains the schema definitions for MIF (Modeled Information
+Format) ontology files, vendored from the **MIF 1.4.1** release
+(`public/schema/1.4.1/ontology/` in the
+[MIF repository](https://github.com/modeled-information-format/MIF), release
+commit `dd5e99e7`). The canonical, always-current copy is
+<https://mif-spec.dev/schema/ontology/ontology.schema.json>; this copy exists
+so offline installations can still validate ontologies.
+
+Do not hand-edit these files. To update, copy both files verbatim from the
+matching MIF release's `public/schema/<version>/ontology/` directory and add
+an entry to `CHANGELOG.md`.
 
 ## Files
 
@@ -52,9 +62,9 @@ python ../../scripts/yaml2jsonld.py ../../ontologies/mif-base.ontology.yaml
 
 ## Schema Evolution
 
-- **v1.0** (current): Cognitive triad hierarchy with nested namespaces
+- **MIF 1.4.1** (current): vendored verbatim from the MIF 1.4.1 release
+- Earlier copies (`v1`, `v2` in `CHANGELOG.md`) were mnemonic-local edits
+  that matched no MIF release
 
-When updating the schema:
-1. Increment version in `$id`
-2. Update CHANGELOG.md
-3. Regenerate JSON-LD files from YAML sources
+The schema `$id` is unversioned and stable by design (MIF ADR-007); the MIF
+release a vendored copy came from is recorded here and in `CHANGELOG.md`.

@@ -214,7 +214,8 @@ def ensure_bidirectional(
         Count of missing back-references found.
     """
     try:
-        from lib.relationships import add_relationship, get_inverse, is_symmetric, is_valid_type, to_snake
+        from lib.mif_compat import same_target, to_kebab
+        from lib.relationships import add_relationship, get_inverse, is_symmetric, is_valid_type
     except ImportError:
         report.warning("bidirectional", "lib.relationships not available, skipping bidirectional check")
         return 0
@@ -257,33 +258,33 @@ def ensure_bidirectional(
             # Check if target has the inverse relationship back
             target_mem = MemoryFile(target_path)
             target_rels = target_mem.get("relationships")
-            inverse_type = get_inverse(rel_type)
-            # Also check snake_case form
-            inverse_snake = to_snake(inverse_type)
+            # Compare on MIF 1.4.1 kebab-case tokens so legacy spellings
+            # (PascalCase, snake_case) and new ones match each other.
+            inverse_token = to_kebab(get_inverse(rel_type))
 
             # Build the set of acceptable back-ref types:
-            # - The proper inverse (PascalCase and snake_case)
-            # - RelatesTo as a weaker but acceptable back-ref
+            # - The proper inverse
+            # - relates-to as a weaker but acceptable back-ref
             # - For symmetric types, the forward type is also valid
-            acceptable_types = {inverse_type, inverse_snake, "RelatesTo", "relates_to"}
+            acceptable_types = {inverse_token, "relates-to"}
             if is_symmetric(rel_type):
-                acceptable_types.add(rel_type)
+                acceptable_types.add(to_kebab(rel_type))
 
             has_back_ref = False
             if isinstance(target_rels, list):
                 for trel in target_rels:
                     if not isinstance(trel, dict):
                         continue
-                    trel_type = trel.get("type", "")
+                    trel_type = to_kebab(trel.get("type", ""))
                     trel_target = trel.get("target", "")
-                    if trel_target == source_uuid and trel_type in acceptable_types:
+                    if same_target(trel_target, source_uuid) and trel_type in acceptable_types:
                         has_back_ref = True
                         break
 
             if not has_back_ref:
                 missing_count += 1
-                # Determine which form to use (match the forward type's convention)
-                back_ref_type = inverse_snake if "_" in rel_type else inverse_type
+                # New back-refs are always written in MIF 1.4.1 form
+                back_ref_type = inverse_token
 
                 if fix:
                     added = add_relationship(
@@ -291,6 +292,7 @@ def ensure_bidirectional(
                         back_ref_type,
                         source_uuid,
                         label=f"Auto back-ref from {path.stem}",
+                        target_title=mem.title,
                     )
                     report.info(
                         "bidirectional",

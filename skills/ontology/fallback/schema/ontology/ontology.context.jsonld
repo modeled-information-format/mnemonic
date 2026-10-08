@@ -1,8 +1,8 @@
 {
   "@context": {
     "@version": 1.1,
-    "@vocab": "https://mif-spec.dev/ontology#",
-    "mif": "https://mif-spec.dev#",
+    "@vocab": "https://mif-spec.dev/ns/ontology#",
+    "mif": "https://mif-spec.dev/ns/",
     "schema": "https://schema.org/",
     "skos": "http://www.w3.org/2004/02/skos/core#",
     "owl": "http://www.w3.org/2002/07/owl#",
@@ -65,6 +65,23 @@
     "traits": {
       "@id": "mif:definesTrait",
       "@container": "@id"
+    },
+    "subtype_of": {
+      "@id": "mif:subtypeOf",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "aliases": {
+      "@id": "skos:altLabel",
+      "@container": "@set"
+    },
+    "exemplars": {
+      "@id": "skos:example",
+      "@container": "@set"
+    },
+    "negative_examples": {
+      "@id": "https://mif-spec.dev/ns/ontology#negativeExample",
+      "@container": "@set"
     },
     "fields": {
       "@id": "mif:hasField",

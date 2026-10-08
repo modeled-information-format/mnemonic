@@ -63,12 +63,32 @@ Validates MIF Level 3 required fields and formats:
 
 Additional checks:
 - `provenance.confidence` should be between 0.0 and 1.0
+- `provenance.sourceType` should be a MIF 1.4.1 value (`user_explicit`,
+  `user_implicit`, `agent_inferred`, `external_import`, `system_generated`)
+- `compressedAt`, if present, must be an ISO 8601 timestamp
 - `tags` should be lowercase with hyphens
-- `valid_from` should be before or equal to `recorded_at`
+- `temporal.validFrom` should be before or equal to `temporal.recordedAt`
+
+### Legacy forms (warnings only)
+
+Memories written by earlier mnemonic releases are still valid. These forms
+produce **warnings**, never errors, each naming the MIF 1.4.1 replacement:
+
+- snake_case frontmatter keys (`valid_from`, `source_type`, `compressed_at`,
+  `code_refs`, ...)
+- legacy `sourceType` values (`inferred`, `conversation`)
+- relationship types not in kebab-case (`relates_to`, `RelatesTo`)
+- relationship `label` outside `metadata`
+- frontmatter relationships with no body `## Relationships` link
+- `[[uuid]]` wiki-link relationship lines
+- citations using `type` instead of `citationType`, or missing `citationRole`
+
+`tools/mnemonic-migrate-mif` rewrites these in place on request (dry run by
+default).
 
 ### Code References Validation (--check code_refs)
 
-For memories with `code_refs`:
+For memories with `codeRefs` (legacy: `code_refs`):
 - `type` should be one of: `function`, `class`, `method`, `variable`, `type`, `module`
 - `file` path should exist (relative to git root)
 - `line` number should be within file length
@@ -76,15 +96,22 @@ For memories with `code_refs`:
 ### Citations Validation (--check citations)
 
 For memories with `citations`:
-- `type` (required) must be: `paper`, `documentation`, `blog`, `github`, `stackoverflow`, `article`
+- `citationType` (required; legacy spelling `type` accepted) should be a MIF
+  1.4.1 value (`article`, `book`, `paper`, `website`, `documentation`,
+  `repository`, `video`, `podcast`, `specification`, `dataset`, `tool`,
+  `other`) or a legacy mnemonic value (`blog`, `github`, `stackoverflow`)
+- `citationRole` should be present (warning if missing)
 - `title` (required) must be non-empty
 - `url` (required) must be valid URL format
 - `relevance` (optional) should be between 0.0 and 1.0
 
 ### Memory Links Validation (--check links)
 
-Validates `[[uuid]]` patterns in memory body:
-- UUID format must be valid
+Validates relationship links:
+- every frontmatter `relationships` entry should be mirrored as a Markdown
+  link under `## Relationships` (MIF 1.4.1 section 5.3); a legacy
+  `[[uuid]]` line counts as a mirror but is itself warned about
+- legacy `[[uuid]]` patterns in the body must have a valid UUID format
 - (Future: referenced memory should exist)
 
 ## Output Formats

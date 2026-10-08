@@ -196,7 +196,7 @@ For each file in COMPRESS_CANDIDATES:
 
   3. Insert summary into frontmatter (after provenance):
      - Add: summary: "{summary}"
-     - Add: compressed_at: {timestamp}
+     - Add: compressedAt: {timestamp}   (MIF 1.4.1; never the legacy compressed_at)
 
   4. Optionally add new keywords to tags
 ```
@@ -208,7 +208,7 @@ For each file in COMPRESS_CANDIDATES:
 # Look for the line after "provenance:" block ends
 # Add:
 #   summary: "The generated summary text"
-#   compressed_at: 2026-01-24T10:00:00Z
+#   compressedAt: 2026-01-24T10:00:00Z
 ```
 
 **Example:**
@@ -216,18 +216,18 @@ For each file in COMPRESS_CANDIDATES:
 ```yaml
 # Before:
 provenance:
-  source_type: conversation
+  sourceType: agent_inferred
   agent: claude-opus-4
   confidence: 0.95
 ---
 
 # After:
 provenance:
-  source_type: conversation
+  sourceType: agent_inferred
   agent: claude-opus-4
   confidence: 0.95
 summary: "Chose PostgreSQL for storage due to JSON support and ACID compliance. Key factors: team expertise and proven scalability."
-compressed_at: 2026-01-24T10:00:00Z
+compressedAt: 2026-01-24T10:00:00Z
 ---
 ```
 
@@ -302,8 +302,9 @@ echo ""
 echo "Updating decay scores..."
 
 for f in $(find "$HOME/.claude/mnemonic/$ORG" "./.claude/mnemonic" -name "*.memory.md" 2>/dev/null); do
-    LAST_ACCESS=$(grep "last_accessed:" "$f" 2>/dev/null | sed 's/.*last_accessed: //')
-    HALF_LIFE=$(grep "half_life:" "$f" 2>/dev/null | sed 's/.*half_life: //')
+    # MIF 1.4.1 keys (lastAccessed, halfLife) or legacy (last_accessed, half_life)
+    LAST_ACCESS=$(grep -E "(lastAccessed|last_accessed):" "$f" 2>/dev/null | head -1 | sed -E 's/.*(lastAccessed|last_accessed): //')
+    HALF_LIFE=$(grep -E "(halfLife|half_life):" "$f" 2>/dev/null | head -1 | sed -E 's/.*(halfLife|half_life): //')
     CURRENT_STRENGTH=$(grep "strength:" "$f" 2>/dev/null | sed 's/.*strength: //')
 
     if [ -n "$LAST_ACCESS" ] && [ -n "$HALF_LIFE" ] && [ -n "$CURRENT_STRENGTH" ]; then

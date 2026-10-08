@@ -1,6 +1,9 @@
 # MIF Level 3 Schema
 
-Full Memory Interchange Format specification.
+mnemonic's profile of the Modeled Information Format (MIF) 1.4.1. The
+normative specification is <https://mif-spec.dev>. Concept frontmatter keys
+are camelCase (MIF 1.4.1 section 3.3); legacy snake_case keys written by
+older mnemonic releases are still read.
 
 ## Minimal Required Fields
 
@@ -29,57 +32,75 @@ tags:
 
 # Bi-temporal tracking (optional)
 temporal:
-  valid_from: 2026-01-23T00:00:00Z
-  valid_until: null
-  recorded_at: 2026-01-23T10:30:00Z
+  validFrom: 2026-01-23T00:00:00Z
+  validUntil: null
+  recordedAt: 2026-01-23T10:30:00Z
   ttl: P90D
   decay:
     model: exponential
-    half_life: P7D
+    halfLife: P7D
     strength: 0.85
-  access_count: 5
-  last_accessed: 2026-01-23T14:22:00Z
+  accessCount: 5
+  lastAccessed: 2026-01-23T14:22:00Z
 
 # Provenance (optional)
 provenance:
-  source_type: user_explicit|inferred|conversation
-  source_ref: file:///path/to/source.ts:42
+  sourceType: user_explicit | user_implicit | agent_inferred | external_import | system_generated
+  sourceRef: file:///path/to/source.ts:42
   agent: claude-opus-4
   confidence: 0.95
-  session_id: abc123
+  sessionId: abc123
 
 # Code structure awareness (optional)
-code_refs:
+codeRefs:
   - file: src/auth/handler.ts
     line: 42
     symbol: authenticateUser
     type: function
 
-# Citations - external references (optional)
+# Citations - external references (optional, MIF 1.4.1 section 5.4)
 citations:
-  - type: documentation
+  - "@type": Citation
+    citationType: documentation
+    citationRole: supports
     title: "Source Title"
     url: https://example.com/source
-    accessed: 2026-01-23T10:30:00Z
+    accessed: 2026-01-23
     relevance: 0.90
 
-# Conflict tracking (optional)
+# Conflict tracking (optional, mnemonic extension)
 conflicts:
-  - memory_id: xyz789
+  - memoryId: xyz789
     resolution: merged
-    resolved_at: 2026-01-23T12:00:00Z
+    resolvedAt: 2026-01-23T12:00:00Z
 
 # Relationships - links to related memories (optional)
+# kebab-case type, urn:mif:<uuid> target, optional metadata.label
 relationships:
-  - type: relates_to
-    target: a5e46807-6883-4fb2-be45-09872ae1a994
-    label: "Optional human-readable description"
+  - type: relates-to
+    target: urn:mif:a5e46807-6883-4fb2-be45-09872ae1a994
+    metadata:
+      label: "Optional human-readable description"
   - type: supersedes
-    target: b6f57918-7994-5gc3-cf56-10983bf2b005
-  - type: derived_from
-    target: c7g68a29-8aa5-6hd4-dg67-21a94cg3c116
+    target: urn:mif:b6f57918-7994-4dc3-af56-10983bf2b005
+  - type: derived-from
+    target: urn:mif:c7e68a29-8aa5-4bd4-9d67-21a94c03c116
 ---
+
+# Title
+
+Content.
+
+## Relationships
+
+- relates-to [Related Memory](urn:mif:a5e46807-6883-4fb2-be45-09872ae1a994)
+- supersedes [Older Memory](urn:mif:b6f57918-7994-4dc3-af56-10983bf2b005)
+- derived-from [Source Memory](urn:mif:c7e68a29-8aa5-4bd4-9d67-21a94c03c116)
 ```
+
+Every frontmatter relationship MUST also appear as a Markdown link under
+`## Relationships` (MIF 1.4.1 section 5.3); the body line carries the same
+type and target as the frontmatter entry.
 
 ## Directory Structure
 

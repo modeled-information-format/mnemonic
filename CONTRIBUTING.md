@@ -195,10 +195,10 @@ modified: ISO-8601
 title: "Title"
 tags: []
 temporal:
-  valid_from: ISO-8601
-  recorded_at: ISO-8601
+  validFrom: ISO-8601
+  recordedAt: ISO-8601
 provenance:
-  source_type: conversation|user_explicit|inferred
+  sourceType: user_explicit | user_implicit | agent_inferred | external_import | system_generated
   agent: model-identifier
   confidence: 0.0-1.0
 ---

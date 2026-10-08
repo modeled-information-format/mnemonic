@@ -8,7 +8,7 @@ Mnemonic is a pure filesystem-based memory system for Claude Code. It provides p
 
 1. **No External Dependencies**: All operations use standard Unix tools (git, rg, find) and Claude's native capabilities
 2. **Skill-First Architecture**: Skills are self-contained and work without hooks or libraries
-3. **MIF Level 3 Compliance**: Standardized Memory Interchange Format for interoperability
+3. **MIF Level 3 Compliance**: Modeled Information Format (MIF) 1.4.1 for interoperability; legacy pre-1.4.1 memories remain readable
 4. **Filesystem as Database**: Markdown files are the source of truth
 
 ### Academic Foundations
@@ -136,14 +136,14 @@ modified: ISO-8601
 title: "Human readable title"
 tags: [list, of, tags]
 temporal:
-  valid_from: ISO-8601
-  recorded_at: ISO-8601
+  validFrom: ISO-8601
+  recordedAt: ISO-8601
   decay:
     model: exponential
-    half_life: P7D
+    halfLife: P7D
     strength: 0.0-1.0
 provenance:
-  source_type: conversation|user_explicit|inferred
+  sourceType: user_explicit | user_implicit | agent_inferred | external_import | system_generated
   agent: model-identifier
   confidence: 0.0-1.0
 citations:                        # Optional external references
@@ -282,7 +282,7 @@ Large memories can be compressed while preserving content:
 ```yaml
 # Added by gc --compress
 summary: "Concise summary (max 500 chars)"
-compressed_at: 2026-01-24T10:00:00Z
+compressedAt: 2026-01-24T10:00:00Z
 ```
 
 Compression criteria:

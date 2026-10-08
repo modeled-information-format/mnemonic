@@ -10,6 +10,8 @@ import re
 from pathlib import Path
 from typing import Optional
 
+from lib.mif_compat import relationship_label
+
 try:
     import yaml
 except ImportError:
@@ -92,7 +94,9 @@ def _regex_fallback_parse(text: str) -> dict:
                 continue
             rel: dict = {}
             type_m = re.search(r"type:\s*([^\n]+)", block)
-            target_m = re.search(r"target:\s*([a-zA-Z0-9-]+)", block)
+            # Targets may be a bare UUID (legacy), urn:mif:<uuid> or a bundle path
+            target_m = re.search(r"target:\s*[\"']?([^\s\"']+)", block)
+            # label (legacy, top-level) or metadata.label (MIF 1.4.1)
             label_m = re.search(r"label:\s*[\"']?([^\"'\n]+)", block)
             if type_m:
                 rel["type"] = type_m.group(1).strip()
@@ -165,6 +169,11 @@ def get_memory_metadata(path: str, max_summary: int = 300) -> Optional[dict]:
     Args:
         path: Absolute or relative path to a .memory.md file.
         max_summary: Maximum characters for the summary text.
+
+    Relationship entries are returned as written (``type`` and ``target``
+    keep their on-disk spelling, legacy or MIF 1.4.1); ``label`` is read from
+    MIF 1.4.1 ``metadata.label`` or the legacy top-level ``label``. Use
+    ``lib.mif_compat.to_kebab`` / ``target_ref`` to compare them.
 
     Returns:
         dict with keys: id, title, namespace, tags, relationships, summary, path.
@@ -241,8 +250,9 @@ def get_memory_metadata(path: str, max_summary: int = 300) -> Optional[dict]:
                         parsed_rel["type"] = str(rel["type"]).strip()
                     if rel.get("target"):
                         parsed_rel["target"] = str(rel["target"]).strip()
-                    if rel.get("label"):
-                        parsed_rel["label"] = str(rel["label"]).strip()
+                    label = relationship_label(rel)
+                    if label:
+                        parsed_rel["label"] = label.strip()
                     if parsed_rel.get("type") and parsed_rel.get("target"):
                         parsed_rels.append(parsed_rel)
             metadata["relationships"] = parsed_rels

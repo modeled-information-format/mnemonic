@@ -39,6 +39,30 @@ from typing import List, Optional
 
 from lib.config import MnemonicConfig
 
+# MIF 1.4.1 ontology directory, relative to a project root or the home
+# directory (spec section 10.8.5: `.mif/ontologies/` and `~/.mif/ontologies/`).
+MIF_ONTOLOGY_DIR = Path(".mif") / "ontologies"
+
+
+def mif_ontology_files(directory: Path) -> List[Path]:
+    """List ontology files in a MIF ``.mif/ontologies/`` directory.
+
+    Returns ``ontology.yaml`` (if present) followed by every
+    ``*.ontology.yaml`` beneath the directory, sorted. Missing or unreadable
+    directories yield an empty list.
+    """
+    try:
+        if not directory.is_dir():
+            return []
+        files: List[Path] = []
+        plain = directory / "ontology.yaml"
+        if plain.is_file():
+            files.append(plain)
+        files.extend(sorted(p for p in directory.rglob("*.ontology.yaml") if p.is_file()))
+        return files
+    except OSError:
+        return []
+
 
 class PathScheme(Enum):
     """Path scheme versions for migration support."""
@@ -249,21 +273,42 @@ class PathResolver:
         """
         Get ordered list of ontology file paths to check.
 
-        Returns:
-            List of ontology paths in precedence order:
-            1. Project-level ontology
-            2. User-level ontology
-            3. MIF base ontology
-        """
-        paths = []
+        MIF 1.4.1 (spec section 10.8.5) locations are checked first; the
+        locations used by earlier mnemonic releases remain as fallbacks so
+        existing custom ontologies keep loading.
 
-        # Project ontology
+        Returns:
+            List of ontology paths in precedence order (first wins where a
+            caller picks one; later entries are lower priority when merged):
+            1. Project ontologies: ``<project>/.mif/ontologies/**/*.ontology.yaml``
+               (and ``<project>/.mif/ontologies/ontology.yaml``)
+            2. Legacy project ontology (``.claude/mnemonic/ontology.yaml`` or
+               ``${MNEMONIC_ROOT}/{org}/{project}/ontology.yaml``)
+            3. User ontologies: ``~/.mif/ontologies/**/*.ontology.yaml``
+               (and ``~/.mif/ontologies/ontology.yaml``)
+            4. Legacy user/org ontology (``${MNEMONIC_ROOT}/ontology.yaml`` or
+               ``${MNEMONIC_ROOT}/{org}/ontology.yaml``)
+
+            The bundled MIF base ontology is loaded separately by
+            ``lib.ontology``. MIF directory entries are included only when the
+            file exists; legacy entries are always listed (callers check
+            ``exists()``), as before.
+        """
+        paths: List[Path] = []
+
+        # 1. Project ontologies (MIF 1.4.1)
+        paths.extend(mif_ontology_files(self.context.project_dir / MIF_ONTOLOGY_DIR))
+
+        # 2. Legacy project ontology
         if self.context.scheme == PathScheme.LEGACY:
             paths.append(self.context.project_dir / ".claude" / "mnemonic" / "ontology.yaml")
         else:
             paths.append(self.context.memory_root / self.context.org / self.context.project / "ontology.yaml")
 
-        # User/org ontology
+        # 3. User ontologies (MIF 1.4.1)
+        paths.extend(mif_ontology_files(self.context.home_dir / MIF_ONTOLOGY_DIR))
+
+        # 4. Legacy user/org ontology
         if self.context.scheme == PathScheme.LEGACY:
             paths.append(self.context.memory_root / "ontology.yaml")
         else:

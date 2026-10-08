@@ -283,8 +283,8 @@ class TestBidirectionalRelationshipProperInverse:
         assert "type: supersedes" in source_content
         assert "target: bbb-222" in source_content
 
-        # Reverse: superseded_by (proper inverse, snake_case matching input)
-        assert "type: superseded_by" in target_content
+        # Reverse: superseded-by (proper inverse, written as the MIF 1.4.1 token)
+        assert "type: superseded-by" in target_content
         assert "target: aaa-111" in target_content
 
     def test_derived_from_creates_derives_backlink(self, tmp_path):
@@ -303,7 +303,7 @@ class TestBidirectionalRelationshipProperInverse:
         assert "type: derives" in target_content
 
     def test_relates_to_still_symmetric(self, tmp_path):
-        """relates_to is symmetric: both sides get relates_to."""
+        """relates_to is symmetric: both sides get relates-to."""
         source = tmp_path / "source.memory.md"
         target = tmp_path / "target.memory.md"
         source.write_text('---\nid: aaa-111\ntitle: "Source"\n---\n\nBody.\n')
@@ -316,11 +316,11 @@ class TestBidirectionalRelationshipProperInverse:
 
         source_content = source.read_text()
         target_content = target.read_text()
-        assert "type: relates_to" in source_content
-        assert "type: relates_to" in target_content
+        assert "type: relates-to" in source_content
+        assert "type: relates-to" in target_content
 
     def test_pascal_case_input(self, tmp_path):
-        """PascalCase input produces PascalCase inverse."""
+        """PascalCase input produces the kebab-case inverse token."""
         source = tmp_path / "source.memory.md"
         target = tmp_path / "target.memory.md"
         source.write_text('---\nid: aaa-111\ntitle: "Source"\n---\n\nBody.\n')
@@ -332,4 +332,5 @@ class TestBidirectionalRelationshipProperInverse:
         assert rev is True
 
         target_content = target.read_text()
-        assert "type: SupersededBy" in target_content
+        # Any input spelling is written as the MIF 1.4.1 kebab-case token
+        assert "type: superseded-by" in target_content

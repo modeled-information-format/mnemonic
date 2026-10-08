@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""
+mnemonic-migrate-mif: Upgrade legacy memory files to MIF 1.4.1 forms.
+
+OPT-IN and DRY-RUN BY DEFAULT. Nothing is written unless --apply is given.
+mnemonic reads legacy files without migrating them, so running this is
+optional.
+
+What it rewrites (see lib/mif_migrate.py for details):
+  - snake_case frontmatter keys -> camelCase (valid_from -> validFrom,
+    source_type -> sourceType, compressed_at -> compressedAt, ...)
+  - top-level confidence/strength/half_life/last_accessed/decay_model
+    (older capture templates) -> provenance / temporal / temporal.decay
+  - relationship types -> kebab-case (relates_to -> relates-to),
+    UUID targets -> urn:mif:<uuid>, label -> metadata.label
+  - citation type -> citationType (+ "@type": Citation)
+  - "## Relationships" [[uuid]] wiki-links -> markdown links, and every
+    frontmatter relationship mirrored as a body link (and vice versa)
+
+What it never does: rename files (they stay *.memory.md), guess values
+(legacy sourceType values, missing citationRole), or touch a key whose
+camelCase twin already exists. Those are listed as notes.
+
+Usage:
+    mnemonic-migrate-mif [paths...] [--apply] [--no-backup] [--diff] [--json]
+
+    paths        Files or directories to scan (default: MNEMONIC_ROOT)
+    --apply      Write changes. Each changed file is first copied to
+                 <file>.pre-mif-1.4.1.bak (unless --no-backup)
+    --no-backup  With --apply, skip the .bak copies (not recommended
+                 unless the memory store is under git)
+    --diff       Show a unified diff per changed file (dry run or apply)
+    --json       Machine-readable report
+
+Exit status: 0 on success (including "nothing to do"), 1 if any file could
+not be parsed, 2 on usage errors.
+"""
+
+import argparse
+import difflib
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from lib.mif_migrate import (  # noqa: E402
+    BACKUP_SUFFIX,
+    MigrationUnavailable,
+    apply_plan,
+    build_title_index,
+    find_memory_files,
+    plan_file,
+)
+
+
+def _default_paths():
+    from lib.config import get_memory_root
+
+    return [get_memory_root()]
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="mnemonic-migrate-mif",
+        description="Upgrade legacy mnemonic memory files to MIF 1.4.1 forms (dry run unless --apply).",
+    )
+    parser.add_argument("paths", nargs="*", type=Path, help="files or directories (default: MNEMONIC_ROOT)")
+    parser.add_argument("--apply", action="store_true", help="write changes (default: dry run)")
+    parser.add_argument("--no-backup", action="store_true", help=f"with --apply, skip {BACKUP_SUFFIX} copies")
+    parser.add_argument("--diff", action="store_true", help="show a unified diff per changed file")
+    parser.add_argument("--json", action="store_true", help="JSON report")
+    args = parser.parse_args(argv)
+
+    if args.no_backup and not args.apply:
+        parser.error("--no-backup only makes sense with --apply")
+
+    paths = args.paths or _default_paths()
+    files, skipped = find_memory_files(paths)
+
+    try:
+        index = build_title_index(files)
+        plans = [plan_file(p, index) for p in files]
+    except MigrationUnavailable as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    written = []
+    if args.apply:
+        for plan in plans:
+            if plan.changed:
+                backup = apply_plan(plan, backup=not args.no_backup)
+                written.append((plan, backup))
+
+    errors = [p for p in plans if p.error]
+    changed = [p for p in plans if p.changed]
+
+    if args.json:
+        report = {
+            "mode": "apply" if args.apply else "dry-run",
+            "scanned": len(files),
+            "changed": len(changed),
+            "errors": len(errors),
+            "skipped": skipped,
+            "files": [
+                {
+                    "path": str(p.path),
+                    "changes": p.changes,
+                    "notes": p.notes,
+                    "error": p.error,
+                }
+                for p in plans
+                if p.changes or p.notes or p.error
+            ],
+        }
+        print(json.dumps(report, indent=2))
+    else:
+        mode = "APPLY" if args.apply else "DRY RUN (no files written; pass --apply to write)"
+        print(f"mnemonic-migrate-mif: {mode}")
+        print(f"Scanned {len(files)} memory file(s) under: {', '.join(str(p) for p in paths)}")
+        for plan in plans:
+            if not (plan.changes or plan.notes or plan.error):
+                continue
+            print(f"\n{plan.path}")
+            if plan.error:
+                print(f"  ERROR: {plan.error}")
+            for change in plan.changes:
+                print(f"  ~ {change}")
+            for note in plan.notes:
+                print(f"  ! {note}")
+            if args.diff and plan.changed and plan.new_text is not None and plan.original_text is not None:
+                sys.stdout.writelines(
+                    difflib.unified_diff(
+                        plan.original_text.splitlines(keepends=True),
+                        plan.new_text.splitlines(keepends=True),
+                        fromfile=str(plan.path),
+                        tofile=str(plan.path) + " (MIF 1.4.1)",
+                    )
+                )
+        for item in skipped:
+            print(f"skipped: {item}")
+        verb = "Rewrote" if args.apply else "Would rewrite"
+        print(f"\n{verb} {len(changed)} file(s); {len(errors)} error(s).")
+        if args.apply and written and not args.no_backup:
+            print(f"Originals saved alongside as *{BACKUP_SUFFIX}.")
+
+    return 1 if errors else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

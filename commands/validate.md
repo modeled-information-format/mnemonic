@@ -29,7 +29,7 @@ Validates an ontology definition file for correctness.
 
 ## Arguments
 
-- `<file>` - Path to ontology YAML file (required). Defaults to `$MNEMONIC_ROOT/ontology.yaml`
+- `<file>` - Path to ontology YAML file. Defaults to the first that exists of: `.mif/ontologies/ontology.yaml` or `.mif/ontologies/*.ontology.yaml` (project, MIF 1.4.1), `~/.mif/ontologies/ontology.yaml` or `~/.mif/ontologies/*.ontology.yaml` (user, MIF 1.4.1), then the legacy `$MNEMONIC_ROOT/ontology.yaml`
 - `--json` - Output as JSON
 
 ## Checks Performed
@@ -52,7 +52,16 @@ if [ -f "$HOME/.config/mnemonic/config.json" ]; then
 else
     MNEMONIC_ROOT="$HOME/.claude/mnemonic"
 fi
-ONTOLOGY_FILE="${1:-$MNEMONIC_ROOT/ontology.yaml}"
+# MIF 1.4.1 locations first (spec 10.8.5), legacy mnemonic location as fallback
+if [ -n "$1" ]; then
+    ONTOLOGY_FILE="$1"
+else
+    ONTOLOGY_FILE="$MNEMONIC_ROOT/ontology.yaml"
+    for candidate in .mif/ontologies/ontology.yaml .mif/ontologies/*.ontology.yaml \
+                     "$HOME/.mif/ontologies/ontology.yaml" "$HOME"/.mif/ontologies/*.ontology.yaml; do
+        if [ -f "$candidate" ]; then ONTOLOGY_FILE="$candidate"; break; fi
+    done
+fi
 PLUGIN_DIR="${CLAUDE_PLUGIN_ROOT:-$(dirname $(dirname $0))}"
 
 python3 "$PLUGIN_DIR/skills/ontology/lib/ontology_validator.py" "$ONTOLOGY_FILE" ${ARGS}

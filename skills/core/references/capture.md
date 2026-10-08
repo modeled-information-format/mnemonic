@@ -41,7 +41,7 @@ UUID=$(uuidgen 2>/dev/null | tr '[:upper:]' '[:lower:]')
 
 2. If matches found, read the top result
 3. If it covers the same topic → UPDATE existing memory (use Edit tool) instead of creating new
-4. If related but different → create new memory with `relates_to` relationship
+4. If related but different → create new memory with a `relates-to` relationship
 5. Only create brand new if no matches found
 
 ## Step 3: Classify Cognitive Type
@@ -60,7 +60,7 @@ After determining the namespace and title, search for related memories to establ
 
 **Why relationships matter:**
 - Link related decisions together
-- Track knowledge evolution (supersedes, derived_from)
+- Track knowledge evolution (supersedes, derived-from)
 - Enable graph-based memory navigation
 - Prevent duplicates by surfacing similar memories
 
@@ -78,13 +78,13 @@ For each candidate memory, evaluate:
 | Relationship Type | When to Use | Example |
 |------------------|-------------|---------|
 | `supersedes` | This memory replaces/updates an older one | New decision overrides previous approach |
-| `derived_from` | This memory builds on another | Implementation pattern based on architecture decision |
-| `relates_to` | Thematically connected | Two related but independent decisions |
+| `derived-from` | This memory builds on another | Implementation pattern based on architecture decision |
+| `relates-to` | Thematically connected | Two related but independent decisions |
 
 **Decision criteria:**
 - Same namespace + similar title keywords (>50% overlap) → `supersedes`
-- Different namespace + shared concepts (>30% overlap) → `derived_from`
-- Thematic connection without direct evolution → `relates_to`
+- Different namespace + shared concepts (>30% overlap) → `derived-from`
+- Thematic connection without direct evolution → `relates-to`
 
 **Include discovered relationships in frontmatter:**
 
@@ -103,12 +103,16 @@ If you find related memories, add them to the `relationships:` field in Step 4.
   ```yaml
   relationships:
     - type: supersedes
-      target: a5e46807-uuid-here
-      label: "Replaces old approach"
-    - type: relates_to
-      target: b6f57918-uuid-here
-      label: "Related decision"
+      target: urn:mif:<target-uuid>
+      metadata:
+        label: "Replaces old approach"
+    - type: relates-to
+      target: urn:mif:<target-uuid>
+      metadata:
+        label: "Related decision"
   ```
+  Mirror each one in the body under `## Relationships` as
+  `- supersedes [Target Title](urn:mif:<target-uuid>)` (MIF 1.4.1 section 5.3).
 
 ```bash
 # Resolve MNEMONIC_ROOT from config
@@ -154,14 +158,17 @@ type: ${TYPE}
 namespace: ${NAMESPACE}
 created: ${DATE}
 modified: ${DATE}
-confidence: 0.8
-strength: 1.0
-half_life: P90D
-last_accessed: ${DATE}
-decay_model: exponential
 tags: []
+temporal:
+  validFrom: ${DATE}
+  recordedAt: ${DATE}
+  lastAccessed: ${DATE}
+  decay:
+    model: exponential
+    halfLife: P90D
+    strength: 1.0
 provenance:
-  source_type: "claude-session"
+  sourceType: agent_inferred
   agent: "claude"
   confidence: 0.8
 ---

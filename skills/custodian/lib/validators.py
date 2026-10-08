@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from lib.mif_compat import find_legacy_keys, to_kebab
+
 from .memory_file import MemoryFile
 from .report import Report
 
@@ -175,12 +177,23 @@ def validate_memories(roots: List[Path], report: Report, fix: bool = False) -> i
                         file_path=path,
                     )
 
-            # Check provenance source_type
-            source_type = mem.get_nested("provenance", "source_type")
+            # Check provenance sourceType (MIF 1.4.1), falling back to legacy source_type
+            source_type = mem.get_compat("provenance", "sourceType")
             if source_type and str(source_type) not in VALID_SOURCE_TYPES:
                 report.warning(
                     "frontmatter",
-                    f"Unknown provenance source_type: {source_type}",
+                    f"Unknown provenance sourceType: {source_type}",
+                    file_path=path,
+                )
+
+            # Legacy snake_case keys are still read, but MIF 1.4.1 uses camelCase
+            legacy = find_legacy_keys(mem.frontmatter)
+            if legacy:
+                report.info(
+                    "frontmatter",
+                    "Legacy key(s) "
+                    + ", ".join(f"{old} (MIF 1.4.1: {new})" for old, new in legacy)
+                    + "; see tools/mnemonic-migrate-mif",
                     file_path=path,
                 )
 
@@ -227,12 +240,14 @@ def validate_relationships(
             valid_types.add(rel_name)
             # Also add PascalCase variant
             valid_types.add(rel_name.replace("_", " ").title().replace(" ", ""))
+            # And the MIF 1.4.1 kebab-case token
+            valid_types.add(to_kebab(rel_name))
 
     error_count = 0
 
     def _check_rel_type(rel_type_str: str) -> bool:
         """Check if a relationship type is valid (supports both naming conventions)."""
-        if rel_type_str in valid_types:
+        if rel_type_str in valid_types or to_kebab(rel_type_str) in valid_types:
             return True
         # Use canonical registry if available (handles snake_case + PascalCase)
         if _is_valid_rel_type is not None:

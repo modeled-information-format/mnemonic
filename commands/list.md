@@ -53,10 +53,12 @@ If the Python script is not available, use the Read tool to display ontology fil
 # Read base ontology
 cat "${PLUGIN_DIR}/skills/ontology/fallback/ontologies/mif-base.ontology.yaml" 2>/dev/null
 
-# Read project ontology
+# Read project ontologies (MIF 1.4.1 location, then legacy)
+cat .mif/ontologies/*.yaml 2>/dev/null
 cat ".claude/mnemonic/ontology.yaml" 2>/dev/null
 
-# Read user ontology
+# Read user ontologies (MIF 1.4.1 location, then legacy)
+cat "$HOME"/.mif/ontologies/*.yaml 2>/dev/null
 cat "$HOME/.claude/mnemonic/ontology.yaml" 2>/dev/null
 ```
 
@@ -69,7 +71,7 @@ Loaded ontologies:
                 episodic/, _episodic/incidents, _episodic/sessions, _episodic/blockers,
                 procedural/, _procedural/runbooks, _procedural/patterns, _procedural/migrations
     Traits: timestamped, confidence, provenance
-    Relationships: relates_to, supersedes, derived_from
+    Relationships: relates-to, supersedes, derived-from
 
   - software-engineering v1.0.0 (extends mif-base)
     Entity types: component, architectural-decision, incident-report, technology

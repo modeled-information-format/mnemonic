@@ -96,7 +96,7 @@ If the namespace is not recognized by any loaded ontology, report a clear error 
 
 2. If matches found, read the top result
 3. If it covers the same topic → UPDATE existing memory (use Edit tool) instead of creating new
-4. If related but different → create new memory with `relates_to` relationship
+4. If related but different → create new memory with a `relates-to` relationship
 5. Only create brand new if no matches found
 
 ### Step 3: Generate Identifiers
@@ -232,19 +232,20 @@ namespace: <real NAMESPACE from Step 1>
 created: <real DATE from Step 3>
 modified: <real DATE from Step 3>
 title: "<real TITLE from Step 1>"
-confidence: <real CONFIDENCE from Step 1>
-strength: 1.0
-half_life: P90D
-last_accessed: <real DATE from Step 3>
-decay_model: exponential
 tags:
 <real TAGS_YAML from Step 5>
 temporal:
-  valid_from: <real DATE from Step 3>
-  recorded_at: <real DATE from Step 3>
+  validFrom: <real DATE from Step 3>
+  recordedAt: <real DATE from Step 3>
+  lastAccessed: <real DATE from Step 3>
+  decay:
+    model: exponential
+    halfLife: P90D
+    strength: 1.0
 provenance:
-  source_type: conversation
+  sourceType: agent_inferred   # user_explicit if the user stated it directly
   agent: claude-opus-4
+  confidence: <real CONFIDENCE from Step 1>
 ---
 
 # <real TITLE>

@@ -142,7 +142,7 @@ tags:
   - frontend
   - architecture
 provenance:
-  source_type: conversation
+  sourceType: agent_inferred
   agent: claude-opus-4
   confidence: 0.95
 ---
@@ -231,4 +231,4 @@ Now that you have Mnemonic set up, continue learning:
 
 - [Architecture](../architecture.md) - How Mnemonic works
 - [CLI Usage](../cli-usage.md) - Command-line operations
-- [MIF Specification](https://mif-spec.dev) - Memory Interchange Format standard
+- [MIF Specification](https://mif-spec.dev) - Modeled Information Format standard

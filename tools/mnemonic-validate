@@ -5,6 +5,13 @@ mnemonic-validate: Validate mnemonic memory files against MIF Level 3 schema.
 This tool parses the MIF schema from skills/format/SKILL.md and validates
 all memory files against it.
 
+MIF 1.4.1 forms (camelCase frontmatter keys, kebab-case relationship types,
+`citationType`, body `## Relationships` markdown links) are preferred.
+Legacy forms written by earlier mnemonic releases (snake_case keys,
+`compressed_at`, `relates_to`, citation `type`, `[[uuid]]` wiki-links) are
+still accepted and reported as warnings, never as errors. See
+tools/mnemonic-migrate-mif for an opt-in rewrite.
+
 Usage:
     mnemonic-validate [options] [path]
 
@@ -36,6 +43,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import yaml
 
 from lib.config import get_memory_root
+from lib.mif_compat import (
+    LEGACY_SOURCE_TYPES,
+    MIF_SOURCE_TYPES,
+    body_has_relationship,
+    find_legacy_keys,
+    get_compat,
+    is_kebab_type,
+    parse_body_relationships,
+    to_kebab,
+)
 
 
 @dataclass
@@ -138,9 +155,14 @@ def parse_mif_schema(skill_path: Path) -> MIFSchema:
     # These enums are fixed by the MIF spec; the regex checks above were
     # aspirational (both branches assigned the same values). Assign directly.
     schema.type_values = ["semantic", "episodic", "procedural"]
-    schema.source_types = ["user_explicit", "inferred", "conversation"]
+    schema.source_types = list(MIF_SOURCE_TYPES)
     schema.code_ref_types = ["function", "class", "method", "variable", "type", "module"]
-    schema.citation_types = ["paper", "documentation", "blog", "github", "stackoverflow", "article"]
+    # MIF 1.4.1 citationType enum (spec 5.4.3) plus legacy mnemonic values
+    schema.citation_types = [
+        "article", "book", "paper", "website", "documentation", "repository",
+        "video", "podcast", "specification", "dataset", "tool", "other",
+        "blog", "github", "stackoverflow",
+    ]
 
     return schema
 
@@ -298,19 +320,49 @@ def validate_memory(
                 )
                 result.valid = False
 
-        # Validate provenance.source_type enum
-        if "provenance" in frontmatter and frontmatter["provenance"]:
+        # Legacy snake_case keys: still read, but MIF 1.4.1 uses camelCase (spec 3.3)
+        for legacy_key, new_key in find_legacy_keys(frontmatter):
+            result.warnings.append(
+                ValidationError(
+                    file=str(file_path),
+                    field=legacy_key,
+                    message=f"Legacy key; MIF 1.4.1 spells it {new_key}",
+                    severity="warning",
+                )
+            )
+
+        # Validate compressedAt (legacy: compressed_at) timestamp
+        compressed_at = get_compat(frontmatter, "compressedAt")
+        if compressed_at is not None and not validate_iso8601(compressed_at):
+            result.errors.append(
+                ValidationError(
+                    file=str(file_path),
+                    field="compressedAt",
+                    message=f"Invalid ISO 8601 timestamp: {compressed_at}",
+                )
+            )
+            result.valid = False
+
+        # Validate provenance.sourceType enum (legacy: source_type)
+        if "provenance" in frontmatter and isinstance(frontmatter["provenance"], dict):
             provenance = frontmatter["provenance"]
-            if "source_type" in provenance:
-                if provenance["source_type"] not in schema.source_types:
-                    result.warnings.append(
-                        ValidationError(
-                            file=str(file_path),
-                            field="provenance.source_type",
-                            message=f"Unknown source_type: {provenance['source_type']}",
-                            severity="warning",
-                        )
+            source_type = get_compat(provenance, "sourceType")
+            if source_type is not None and source_type not in schema.source_types:
+                if source_type in LEGACY_SOURCE_TYPES:
+                    message = (
+                        f"Legacy sourceType value: {source_type} "
+                        f"(MIF 1.4.1 values: {', '.join(schema.source_types)})"
                     )
+                else:
+                    message = f"Unknown sourceType: {source_type}"
+                result.warnings.append(
+                    ValidationError(
+                        file=str(file_path),
+                        field="provenance.sourceType",
+                        message=message,
+                        severity="warning",
+                    )
+                )
 
             # Validate confidence range
             if "confidence" in provenance:
@@ -340,8 +392,11 @@ def validate_memory(
 
     # Code refs validation
     if check_type is None or check_type == "code_refs":
-        if "code_refs" in frontmatter and frontmatter["code_refs"]:
-            for i, ref in enumerate(frontmatter["code_refs"]):
+        code_refs = get_compat(frontmatter, "codeRefs")
+        if isinstance(code_refs, list) and code_refs:
+            for i, ref in enumerate(code_refs):
+                if not isinstance(ref, dict):
+                    continue
                 # Validate type enum
                 if "type" in ref and ref["type"] not in schema.code_ref_types:
                     result.warnings.append(
@@ -385,22 +440,44 @@ def validate_memory(
     if check_type is None or check_type == "citations":
         if "citations" in frontmatter and frontmatter["citations"]:
             for i, citation in enumerate(frontmatter["citations"]):
-                # Required citation fields
-                if "type" not in citation:
+                if not isinstance(citation, dict):
+                    continue
+                # Required citation fields. MIF 1.4.1 spells the category
+                # citationType; the legacy mnemonic spelling `type` is accepted.
+                citation_type = citation.get("citationType", citation.get("type"))
+                if citation_type is None:
                     result.errors.append(
                         ValidationError(
                             file=str(file_path),
-                            field=f"citations[{i}].type",
-                            message="Citation missing required field: type",
+                            field=f"citations[{i}].citationType",
+                            message="Citation missing required field: citationType",
                         )
                     )
                     result.valid = False
-                elif citation["type"] not in schema.citation_types:
+                elif citation_type not in schema.citation_types:
+                    result.warnings.append(
+                        ValidationError(
+                            file=str(file_path),
+                            field=f"citations[{i}].citationType",
+                            message=f"Unknown citation type: {citation_type}",
+                            severity="warning",
+                        )
+                    )
+                if "citationType" not in citation and "type" in citation:
                     result.warnings.append(
                         ValidationError(
                             file=str(file_path),
                             field=f"citations[{i}].type",
-                            message=f"Unknown citation type: {citation['type']}",
+                            message="Legacy key; MIF 1.4.1 spells it citationType",
+                            severity="warning",
+                        )
+                    )
+                if "citationRole" not in citation:
+                    result.warnings.append(
+                        ValidationError(
+                            file=str(file_path),
+                            field=f"citations[{i}].citationRole",
+                            message="MIF 1.4.1 requires citationRole (e.g. supports, background)",
                             severity="warning",
                         )
                     )
@@ -449,7 +526,7 @@ def validate_memory(
 
     # Memory links validation
     if check_type is None or check_type == "links":
-        # Find [[uuid]] patterns in body
+        # Legacy [[uuid]] patterns in body (still accepted)
         link_pattern = r"\[\[([a-f0-9-]+)\]\]"
         for match in re.finditer(link_pattern, body):
             linked_id = match.group(1)
@@ -460,6 +537,58 @@ def validate_memory(
                         file=str(file_path),
                         field="body",
                         message=f"Invalid memory link format: [[{linked_id}]]",
+                        severity="warning",
+                    )
+                )
+
+        # MIF 1.4.1 relationships: kebab-case type tokens, mirrored as
+        # markdown links in the body `## Relationships` section (spec 5.3).
+        rels = frontmatter.get("relationships")
+        if isinstance(rels, list):
+            for i, rel in enumerate(rels):
+                if not isinstance(rel, dict):
+                    continue
+                rel_type = rel.get("type")
+                target = rel.get("target")
+                if not rel_type or not target:
+                    continue
+                if not is_kebab_type(str(rel_type)):
+                    result.warnings.append(
+                        ValidationError(
+                            file=str(file_path),
+                            field=f"relationships[{i}].type",
+                            message=f"Legacy relationship type {rel_type}; MIF 1.4.1 token is {to_kebab(str(rel_type))}",
+                            severity="warning",
+                        )
+                    )
+                if "label" in rel:
+                    result.warnings.append(
+                        ValidationError(
+                            file=str(file_path),
+                            field=f"relationships[{i}].label",
+                            message="Legacy key; MIF 1.4.1 keeps it under metadata.label",
+                            severity="warning",
+                        )
+                    )
+                if not body_has_relationship(body, str(rel_type), str(target)):
+                    result.warnings.append(
+                        ValidationError(
+                            file=str(file_path),
+                            field=f"relationships[{i}]",
+                            message="Not mirrored as a body link under ## Relationships (MIF 1.4.1 section 5.3)",
+                            severity="warning",
+                        )
+                    )
+        for entry in parse_body_relationships(body):
+            if entry["form"] == "wiki":
+                result.warnings.append(
+                    ValidationError(
+                        file=str(file_path),
+                        field="body",
+                        message=(
+                            f"Legacy wiki-link relationship [[{entry['target']}]]; "
+                            "MIF 1.4.1 uses markdown links, e.g. [Title](urn:mif:<uuid>)"
+                        ),
                         severity="warning",
                     )
                 )
@@ -605,10 +734,10 @@ def capture_as_memory(
         "  - validation",
         "  - maintenance",
         "temporal:",
-        f"  valid_from: {timestamp}",
-        f"  recorded_at: {timestamp}",
+        f"  validFrom: {timestamp}",
+        f"  recordedAt: {timestamp}",
         "provenance:",
-        "  source_type: inferred",
+        "  sourceType: system_generated",
         "  agent: mnemonic-validate",
         "  confidence: 1.0",
         "---",

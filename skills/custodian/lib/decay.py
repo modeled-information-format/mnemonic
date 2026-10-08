@@ -83,10 +83,8 @@ def update_decay(roots: List[Path], report: Report, dry_run: bool = False) -> in
             if model == "none":
                 continue
 
-            half_life_str = mem.get_nested("temporal", "decay", "halfLife", default="")
-            if not half_life_str:
-                # Also try half_life (snake_case variant)
-                half_life_str = mem.get_nested("temporal", "decay", "half_life", default="")
+            # halfLife (MIF 1.4.1), falling back to legacy half_life
+            half_life_str = mem.get_compat("temporal", "decay", "halfLife", default="")
             if not half_life_str:
                 report.warning(
                     "decay",
@@ -111,7 +109,8 @@ def update_decay(roots: List[Path], report: Report, dry_run: bool = False) -> in
             current_strength = float(current_str) if current_str is not None else 1.0
 
             # Get last access time
-            last_accessed_str = mem.get_nested("temporal", "last_accessed", default=None)
+            # lastAccessed (MIF 1.4.1), falling back to legacy last_accessed
+            last_accessed_str = mem.get_compat("temporal", "lastAccessed", default=None)
             if last_accessed_str is None:
                 # Fall back to created date
                 last_accessed_str = mem.get("created", "")

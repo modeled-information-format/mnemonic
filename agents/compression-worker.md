@@ -93,7 +93,7 @@ Return a JSON object:
   "original_lines": 150,
   "summary": "Concise 2-3 sentence summary capturing the essential information from this memory. Includes key decisions, facts, or procedures that should be preserved for future reference.",
   "keywords": ["keyword1", "keyword2", "keyword3"],
-  "compressed_at": "2026-01-24T10:00:00Z"
+  "compressedAt": "2026-01-24T10:00:00Z"
 }
 ```
 

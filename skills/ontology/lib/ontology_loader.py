@@ -24,6 +24,25 @@ from .ontology_registry import DiscoveryPattern
 logger = logging.getLogger(__name__)
 
 
+def _mif_ontology_files(directory: Path) -> List[Path]:
+    """``ontology.yaml`` plus every ``*.ontology.yaml`` in a ``.mif/ontologies/`` dir.
+
+    Kept local (rather than importing ``lib.paths``) so this skill library
+    stays importable on its own.
+    """
+    try:
+        if not directory.is_dir():
+            return []
+        files: List[Path] = []
+        plain = directory / "ontology.yaml"
+        if plain.is_file():
+            files.append(plain)
+        files.extend(sorted(p for p in directory.rglob("*.ontology.yaml") if p.is_file()))
+        return files
+    except OSError:
+        return []
+
+
 @dataclass
 class LoadedOntology:
     """A loaded and parsed ontology."""
@@ -55,10 +74,14 @@ class OntologyLoader:
     """
     Loads MIF ontologies from multiple sources with caching.
 
-    Resolution order:
-    1. Bundled ontologies (skills/ontology/fallback/)
-    2. User ontology (${MNEMONIC_ROOT}/{org}/{project}/ontology.yaml)
-    3. Project ontology (${MNEMONIC_ROOT}/ontology.yaml)
+    Resolution (MIF 1.4.1 section 10.8.5; later sources extend or override):
+    1. Bundled MIF base ontology (skills/ontology/fallback/)
+    2. User ontology: ``~/.mif/ontologies/`` (legacy fallback:
+       ``~/.claude/mnemonic/{org}[/{project}]/ontology.yaml``)
+    3. Project ontology: ``./.mif/ontologies/`` (legacy fallback:
+       ``./.claude/mnemonic/ontology.yaml``)
+
+    ``load_project_ontology`` returns the highest-precedence one found.
 
     Canonical MIF schemas: https://mif-spec.dev/schema/
     """
@@ -143,10 +166,20 @@ class OntologyLoader:
             logger.warning(f"Invalid project name contains unsafe characters: {project}")
             return None
 
-        # Project-level ontology
+        # Project-level ontology: MIF 1.4.1 location first, then legacy
+        for project_path in _mif_ontology_files(Path.cwd() / ".mif" / "ontologies"):
+            loaded = self.load_ontology(project_path)
+            if loaded:
+                return loaded
         project_path = Path.cwd() / ".claude" / "mnemonic" / "ontology.yaml"
         if project_path.exists():
             return self.load_ontology(project_path)
+
+        # User-level ontology: MIF 1.4.1 location
+        for user_mif_path in _mif_ontology_files(Path.home() / ".mif" / "ontologies"):
+            loaded = self.load_ontology(user_mif_path)
+            if loaded:
+                return loaded
 
         # User-level ontology (org/project specific)
         if project:
