@@ -11,12 +11,12 @@ A pure filesystem-based memory system for Claude Code. No external dependencies 
   <img src=".github/readme-infographic.png" alt="Mnemonic Architecture" width="800">
 </p>
 
-> **Note**: This plugin implements the [Modeled Information Format (MIF)](https://mif-spec.dev) specification, version 1.4.1, as an AI-memory store (the use case MIF's AI Memory profile describes). MIF defines a portable, human-readable Markdown-plus-YAML format for knowledge.
+> **Note**: This plugin implements the [Modeled Information Format (MIF)](https://mif-spec.dev) specification, version 1.4.2, as an AI-memory store (the use case MIF's AI Memory profile describes). MIF defines a portable, human-readable Markdown-plus-YAML format for knowledge.
 
 ## Features
 
 - **Pure Filesystem**: All memories stored as markdown files with YAML frontmatter
-- **MIF 1.4.1 Level 3**: New memories are written in Modeled Information Format 1.4.1 form; memories written by earlier releases keep working (see [MIF 1.4.1 alignment](#mif-141-alignment))
+- **MIF 1.4.2 Level 3**: New memories are written in Modeled Information Format 1.4.2 form; memories written by earlier releases keep working (see [MIF 1.4.1 alignment](#mif-141-alignment))
 - **Skill-First Architecture**: Skills work standalone without hooks or libraries
 - **Cognitive Memory Types**: Semantic, episodic, and procedural memories
 - **Custom Ontologies**: Extend with domain-specific entity types and relationships
@@ -475,7 +475,7 @@ make check-deps
 
 ## Related Projects
 
-- **[MIF (Modeled Information Format)](https://mif-spec.dev)** - The specification this plugin implements (1.4.1). An open, OKF-compatible standard for portable knowledge; mnemonic uses its AI Memory profile. Schemas: https://mif-spec.dev/schema/
+- **[MIF (Modeled Information Format)](https://mif-spec.dev)** - The specification this plugin implements (1.4.2). An open, OKF-compatible standard for portable knowledge; mnemonic uses its AI Memory profile. Schemas: https://mif-spec.dev/schema/
 
 ## License
 

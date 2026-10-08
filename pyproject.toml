@@ -1,6 +1,6 @@
 [project]
 name = "mnemonic"
-version = "1.6.0"
+version = "0.7.0"
 description = "Persistent filesystem-based memory system for Claude Code"
 readme = "README.md"
 license = {text = "MIT"}

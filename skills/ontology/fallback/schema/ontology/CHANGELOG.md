@@ -2,6 +2,13 @@
 
 All notable changes to the ontology schema are documented in this file.
 
+## [MIF 1.4.2] - 2026-10-08
+
+### Changed
+- Provenance only: `ontology.schema.json` and `ontology.context.jsonld` were
+  checked byte-identical to <https://mif-spec.dev/schema/1.4.2/ontology/>
+  (MIF 1.4.2, release commit `ad520b8c`). File contents are unchanged.
+
 ## [MIF 1.4.1] - 2026-10-08
 
 ### Changed

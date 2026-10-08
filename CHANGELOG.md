@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Part of the coordinated MIF (Modeled Information Format) 1.4.1 release.
+## [0.7.0] - 2026-10-08
+
+Part of the coordinated MIF (Modeled Information Format) 1.4.2 release.
+mnemonic targets MIF 1.4.2; its schemas are byte-identical to MIF 1.4.1, so
+the 1.4.1 forms and section references below apply unchanged.
 Memories written by earlier releases keep working unchanged: every legacy
 form below is still read, and validators report it as a warning, never an
 error.
@@ -49,6 +53,11 @@ error.
   outside `metadata`, unmirrored relationships, wiki-link relationship lines
   and citations without `citationType` / `citationRole`; validates
   `compressedAt` in either spelling
+- **[Versioning]**: `pyproject.toml` version realigned to the plugin
+  release lineage (was `1.6.0`, out of step with `plugin.json` and this
+  changelog); both now read `0.7.0`
+- **[MIF 1.4.2 target]**: README, docs, the format skill and the vendored
+  ontology schema provenance now name MIF 1.4.2 as the target release
 
 ### Added
 
