@@ -5,7 +5,7 @@ allowed-tools:
 - Glob
 - Bash
 - Grep
-description: MIF (Modeled Information Format) 1.4.1 Level 3 memory templates and formatting guidelines
+description: MIF (Modeled Information Format) 1.4.2 Level 3 memory templates and formatting guidelines
 name: format
 user-invocable: true
 ---
@@ -20,7 +20,7 @@ Run `/mnemonic:list --namespaces` to see available namespaces from loaded ontolo
 
 # Mnemonic Format Skill
 
-MIF (Modeled Information Format) 1.4.1 Level 3 templates and formatting guidelines.
+MIF (Modeled Information Format) 1.4.2 Level 3 templates and formatting guidelines.
 
 Concept frontmatter keys are camelCase (MIF 1.4.1 section 3.3). Older
 mnemonic memories may still carry snake_case keys (`valid_from`,

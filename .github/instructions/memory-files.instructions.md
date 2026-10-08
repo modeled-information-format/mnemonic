@@ -2,7 +2,7 @@
 applyTo: "**/*.memory.md"
 ---
 
-# Memory File Guidelines (MIF 1.4.1 Level 3)
+# Memory File Guidelines (MIF 1.4.2 Level 3)
 
 Concept frontmatter keys are camelCase (MIF 1.4.1 section 3.3). Legacy
 snake_case keys (`valid_from`, `source_type`, `compressed_at`) in older

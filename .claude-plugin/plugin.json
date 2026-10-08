@@ -1,6 +1,6 @@
 {
   "name": "mnemonic",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Pure filesystem-based memory system for Claude Code with custom ontology support",
   "author": {
     "name": "zircote",

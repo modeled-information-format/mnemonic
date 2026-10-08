@@ -1,6 +1,6 @@
 # MIF Level 3 Schema
 
-mnemonic's profile of the Modeled Information Format (MIF) 1.4.1. The
+mnemonic's profile of the Modeled Information Format (MIF) 1.4.2. The
 normative specification is <https://mif-spec.dev>. Concept frontmatter keys
 are camelCase (MIF 1.4.1 section 3.3); legacy snake_case keys written by
 older mnemonic releases are still read.
