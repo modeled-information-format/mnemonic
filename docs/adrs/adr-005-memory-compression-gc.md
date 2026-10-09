@@ -224,11 +224,11 @@ Extending gc with compression achieves:
 
 ### 2026-10-08
 
-**Status:** Amended for MIF 1.4.1
+**Status:** Amended for MIF 1.4.2
 
-**Findings:** MIF 1.4.1 (section 5.6) names the compression timestamp
+**Findings:** MIF 1.4.2 (section 5.6) names the compression timestamp
 `compressedAt`. New compressions write `compressedAt`; the
-`compressed_at` key shown under *Storage Format* is the pre-1.4.1 spelling
+`compressed_at` key shown under *Storage Format* is the pre-1.4.2 spelling
 and is still read.
 
 **Action Required:** None.

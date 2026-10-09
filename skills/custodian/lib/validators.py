@@ -177,7 +177,7 @@ def validate_memories(roots: List[Path], report: Report, fix: bool = False) -> i
                         file_path=path,
                     )
 
-            # Check provenance sourceType (MIF 1.4.1), falling back to legacy source_type
+            # Check provenance sourceType (MIF 1.4.2), falling back to legacy source_type
             source_type = mem.get_compat("provenance", "sourceType")
             if source_type and str(source_type) not in VALID_SOURCE_TYPES:
                 report.warning(
@@ -186,13 +186,13 @@ def validate_memories(roots: List[Path], report: Report, fix: bool = False) -> i
                     file_path=path,
                 )
 
-            # Legacy snake_case keys are still read, but MIF 1.4.1 uses camelCase
+            # Legacy snake_case keys are still read, but MIF 1.4.2 uses camelCase
             legacy = find_legacy_keys(mem.frontmatter)
             if legacy:
                 report.info(
                     "frontmatter",
                     "Legacy key(s) "
-                    + ", ".join(f"{old} (MIF 1.4.1: {new})" for old, new in legacy)
+                    + ", ".join(f"{old} (MIF 1.4.2: {new})" for old, new in legacy)
                     + "; see tools/mnemonic-migrate-mif",
                     file_path=path,
                 )
@@ -240,7 +240,7 @@ def validate_relationships(
             valid_types.add(rel_name)
             # Also add PascalCase variant
             valid_types.add(rel_name.replace("_", " ").title().replace(" ", ""))
-            # And the MIF 1.4.1 kebab-case token
+            # And the MIF 1.4.2 kebab-case token
             valid_types.add(to_kebab(rel_name))
 
     error_count = 0

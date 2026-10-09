@@ -223,7 +223,7 @@ discovery:
 
 ### Ontology File Locations
 
-Resolution order follows MIF 1.4.1 section 10.8.5 (later overrides earlier).
+Resolution order follows MIF 1.4.2 section 10.8.5 (later overrides earlier).
 Within each scope the MIF location is checked first and the location used by
 earlier mnemonic releases is kept as a fallback, so existing ontologies keep
 loading without being moved:
@@ -231,9 +231,9 @@ loading without being moved:
 | Location | Scope | Notes |
 |----------|-------|-------|
 | `skills/ontology/fallback/` | Bundled | Base MIF ontologies (cognitive triad) |
-| `~/.mif/ontologies/*.ontology.yaml` (or `ontology.yaml`) | User | MIF 1.4.1 location |
+| `~/.mif/ontologies/*.ontology.yaml` (or `ontology.yaml`) | User | MIF 1.4.2 location |
 | `${MNEMONIC_ROOT}/{org}/ontology.yaml`, `${MNEMONIC_ROOT}/{org}/{project}/ontology.yaml` | User | Legacy fallback |
-| `.mif/ontologies/*.ontology.yaml` (or `ontology.yaml`) | Project | MIF 1.4.1 location |
+| `.mif/ontologies/*.ontology.yaml` (or `ontology.yaml`) | Project | MIF 1.4.2 location |
 | `.claude/mnemonic/ontology.yaml` | Project | Legacy fallback |
 
 Project ontologies can extend or override base definitions.

@@ -443,7 +443,7 @@ add_bidirectional_relationship(
     label="Replaced by new approach"
 )
 
-# Creates (MIF 1.4.1 form):
+# Creates (MIF 1.4.2 form):
 # - decision-a.memory.md: supersedes -> urn:mif:<decision-b uuid>
 # - decision-b.memory.md: superseded-by -> urn:mif:<decision-a uuid>
 ````
@@ -451,7 +451,7 @@ add_bidirectional_relationship(
 **API Reference**:
 
 #### `add_relationship(memory_path, rel_type, target_id, label=None, target_title=None)`
-Add a single relationship in MIF 1.4.1 form: a frontmatter entry
+Add a single relationship in MIF 1.4.2 form: a frontmatter entry
 (`type: <kebab-case>`, `target: urn:mif:<uuid>`, optional `metadata.label`)
 plus its body mirror line `- <type> [<target_title>](urn:mif:<uuid>)` under
 `## Relationships`.
@@ -529,7 +529,7 @@ from lib.relationships import (
 # Convert naming
 to_pascal("supersedes")        # → "Supersedes"
 to_snake("SupersededBy")       # → "superseded_by"
-to_token("SupersededBy")       # → "superseded-by" (MIF 1.4.1 written form)
+to_token("SupersededBy")       # → "superseded-by" (MIF 1.4.2 written form)
 
 # Get inverse
 get_inverse("Supersedes")      # → "SupersededBy"
@@ -549,7 +549,7 @@ get_all_valid_types()
 ````
 
 **Design Notes**:
-- MIF 1.4.1 sections 8.1.1 / 8.2 compliant
+- MIF 1.4.2 sections 8.1.1 / 8.2 compliant
 - Written form is the kebab-case token (`superseded-by`); PascalCase is the
   registry/display name
 - PascalCase and snake_case are accepted on input for backward compatibility

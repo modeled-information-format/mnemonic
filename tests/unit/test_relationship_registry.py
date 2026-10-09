@@ -283,7 +283,7 @@ class TestBidirectionalRelationshipProperInverse:
         assert "type: supersedes" in source_content
         assert "target: bbb-222" in source_content
 
-        # Reverse: superseded-by (proper inverse, written as the MIF 1.4.1 token)
+        # Reverse: superseded-by (proper inverse, written as the MIF 1.4.2 token)
         assert "type: superseded-by" in target_content
         assert "target: aaa-111" in target_content
 
@@ -332,5 +332,5 @@ class TestBidirectionalRelationshipProperInverse:
         assert rev is True
 
         target_content = target.read_text()
-        # Any input spelling is written as the MIF 1.4.1 kebab-case token
+        # Any input spelling is written as the MIF 1.4.2 kebab-case token
         assert "type: superseded-by" in target_content

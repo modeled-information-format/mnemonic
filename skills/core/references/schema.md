@@ -2,7 +2,7 @@
 
 mnemonic's profile of the Modeled Information Format (MIF) 1.4.2. The
 normative specification is <https://mif-spec.dev>. Concept frontmatter keys
-are camelCase (MIF 1.4.1 section 3.3); legacy snake_case keys written by
+are camelCase (MIF 1.4.2 section 3.3); legacy snake_case keys written by
 older mnemonic releases are still read.
 
 ## Minimal Required Fields
@@ -58,7 +58,7 @@ codeRefs:
     symbol: authenticateUser
     type: function
 
-# Citations - external references (optional, MIF 1.4.1 section 5.4)
+# Citations - external references (optional, MIF 1.4.2 section 5.4)
 citations:
   - "@type": Citation
     citationType: documentation
@@ -99,7 +99,7 @@ Content.
 ```
 
 Every frontmatter relationship MUST also appear as a Markdown link under
-`## Relationships` (MIF 1.4.1 section 5.3); the body line carries the same
+`## Relationships` (MIF 1.4.2 section 5.3); the body line carries the same
 type and target as the frontmatter entry.
 
 ## Directory Structure

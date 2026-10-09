@@ -76,7 +76,7 @@ class OntologyLoader:
     """
     Loads MIF ontologies from multiple sources with caching.
 
-    Resolution (MIF 1.4.1 section 10.8.5; later sources extend or override):
+    Resolution (MIF 1.4.2 section 10.8.5; later sources extend or override):
     1. Bundled MIF base ontology (skills/ontology/fallback/)
     2. User ontology: ``~/.mif/ontologies/`` (legacy fallback:
        ``~/.claude/mnemonic/{org}[/{project}]/ontology.yaml``)
@@ -175,10 +175,10 @@ class OntologyLoader:
             return []
 
         candidates: List[Path] = []
-        # Project-level: MIF 1.4.1 location first, then legacy
+        # Project-level: MIF 1.4.2 location first, then legacy
         candidates.extend(_mif_ontology_files(Path.cwd() / ".mif" / "ontologies"))
         candidates.append(Path.cwd() / ".claude" / "mnemonic" / "ontology.yaml")
-        # User-level: MIF 1.4.1 location first, then the first legacy file found
+        # User-level: MIF 1.4.2 location first, then the first legacy file found
         candidates.extend(_mif_ontology_files(Path.home() / ".mif" / "ontologies"))
         legacy_user = []
         if project:

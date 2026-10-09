@@ -5,7 +5,7 @@ mnemonic-validate: Validate mnemonic memory files against MIF Level 3 schema.
 This tool parses the MIF schema from skills/format/SKILL.md and validates
 all memory files against it.
 
-MIF 1.4.1 forms (camelCase frontmatter keys, kebab-case relationship types,
+MIF 1.4.2 forms (camelCase frontmatter keys, kebab-case relationship types,
 `citationType`, body `## Relationships` markdown links) are preferred.
 Legacy forms written by earlier mnemonic releases (snake_case keys,
 `compressed_at`, `relates_to`, citation `type`, `[[uuid]]` wiki-links) are
@@ -157,7 +157,7 @@ def parse_mif_schema(skill_path: Path) -> MIFSchema:
     schema.type_values = ["semantic", "episodic", "procedural"]
     schema.source_types = list(MIF_SOURCE_TYPES)
     schema.code_ref_types = ["function", "class", "method", "variable", "type", "module"]
-    # MIF 1.4.1 citationType enum (spec 5.4.3) plus legacy mnemonic values
+    # MIF 1.4.2 citationType enum (spec 5.4.3) plus legacy mnemonic values
     schema.citation_types = [
         "article", "book", "paper", "website", "documentation", "repository",
         "video", "podcast", "specification", "dataset", "tool", "other",
@@ -320,13 +320,13 @@ def validate_memory(
                 )
                 result.valid = False
 
-        # Legacy snake_case keys: still read, but MIF 1.4.1 uses camelCase (spec 3.3)
+        # Legacy snake_case keys: still read, but MIF 1.4.2 uses camelCase (spec 3.3)
         for legacy_key, new_key in find_legacy_keys(frontmatter):
             result.warnings.append(
                 ValidationError(
                     file=str(file_path),
                     field=legacy_key,
-                    message=f"Legacy key; MIF 1.4.1 spells it {new_key}",
+                    message=f"Legacy key; MIF 1.4.2 spells it {new_key}",
                     severity="warning",
                 )
             )
@@ -351,7 +351,7 @@ def validate_memory(
                 if source_type in LEGACY_SOURCE_TYPES:
                     message = (
                         f"Legacy sourceType value: {source_type} "
-                        f"(MIF 1.4.1 values: {', '.join(schema.source_types)})"
+                        f"(MIF 1.4.2 values: {', '.join(schema.source_types)})"
                     )
                 else:
                     message = f"Unknown sourceType: {source_type}"
@@ -442,7 +442,7 @@ def validate_memory(
             for i, citation in enumerate(frontmatter["citations"]):
                 if not isinstance(citation, dict):
                     continue
-                # Required citation fields. MIF 1.4.1 spells the category
+                # Required citation fields. MIF 1.4.2 spells the category
                 # citationType; the legacy mnemonic spelling `type` is accepted.
                 citation_type = citation.get("citationType", citation.get("type"))
                 if citation_type is None:
@@ -468,7 +468,7 @@ def validate_memory(
                         ValidationError(
                             file=str(file_path),
                             field=f"citations[{i}].type",
-                            message="Legacy key; MIF 1.4.1 spells it citationType",
+                            message="Legacy key; MIF 1.4.2 spells it citationType",
                             severity="warning",
                         )
                     )
@@ -477,7 +477,7 @@ def validate_memory(
                         ValidationError(
                             file=str(file_path),
                             field=f"citations[{i}].citationRole",
-                            message="MIF 1.4.1 requires citationRole (e.g. supports, background)",
+                            message="MIF 1.4.2 requires citationRole (e.g. supports, background)",
                             severity="warning",
                         )
                     )
@@ -541,7 +541,7 @@ def validate_memory(
                     )
                 )
 
-        # MIF 1.4.1 relationships: kebab-case type tokens, mirrored as
+        # MIF 1.4.2 relationships: kebab-case type tokens, mirrored as
         # markdown links in the body `## Relationships` section (spec 5.3).
         rels = frontmatter.get("relationships")
         if isinstance(rels, list):
@@ -557,7 +557,7 @@ def validate_memory(
                         ValidationError(
                             file=str(file_path),
                             field=f"relationships[{i}].type",
-                            message=f"Legacy relationship type {rel_type}; MIF 1.4.1 token is {to_kebab(str(rel_type))}",
+                            message=f"Legacy relationship type {rel_type}; MIF 1.4.2 token is {to_kebab(str(rel_type))}",
                             severity="warning",
                         )
                     )
@@ -566,7 +566,7 @@ def validate_memory(
                         ValidationError(
                             file=str(file_path),
                             field=f"relationships[{i}].label",
-                            message="Legacy key; MIF 1.4.1 keeps it under metadata.label",
+                            message="Legacy key; MIF 1.4.2 keeps it under metadata.label",
                             severity="warning",
                         )
                     )
@@ -576,7 +576,7 @@ def validate_memory(
                         ValidationError(
                             file=str(file_path),
                             field=f"relationships[{i}]",
-                            message="Not mirrored as a body link under ## Relationships (MIF 1.4.1 section 5.3)",
+                            message="Not mirrored as a body link under ## Relationships (MIF 1.4.2 section 5.3)",
                             severity="warning",
                         )
                     )
@@ -588,7 +588,7 @@ def validate_memory(
                         field="body",
                         message=(
                             f"Legacy wiki-link relationship [[{entry['target']}]]; "
-                            "MIF 1.4.1 uses markdown links, e.g. [Title](urn:mif:<uuid>)"
+                            "MIF 1.4.2 uses markdown links, e.g. [Title](urn:mif:<uuid>)"
                         ),
                         severity="warning",
                     )

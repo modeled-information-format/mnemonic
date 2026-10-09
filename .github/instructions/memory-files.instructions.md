@@ -4,7 +4,7 @@ applyTo: "**/*.memory.md"
 
 # Memory File Guidelines (MIF 1.4.2 Level 3)
 
-Concept frontmatter keys are camelCase (MIF 1.4.1 section 3.3). Legacy
+Concept frontmatter keys are camelCase (MIF 1.4.2 section 3.3). Legacy
 snake_case keys (`valid_from`, `source_type`, `compressed_at`) in older
 memories are still read; do not introduce them in new or edited files.
 
@@ -61,7 +61,7 @@ After frontmatter, use standard Markdown:
 ## Relationships
 
 Relationships are authoritative in frontmatter and mirrored as Markdown links
-under `## Relationships` (MIF 1.4.1 section 5.3):
+under `## Relationships` (MIF 1.4.2 section 5.3):
 
 ```yaml
 relationships:

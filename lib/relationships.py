@@ -88,7 +88,7 @@ _build_conversion_maps()
 def to_pascal(snake: str) -> str:
     """Convert snake_case relationship type to PascalCase.
 
-    Also accepts MIF 1.4.1 kebab-case tokens.
+    Also accepts MIF 1.4.2 kebab-case tokens.
 
     Examples:
         relates_to -> RelatesTo
@@ -99,7 +99,7 @@ def to_pascal(snake: str) -> str:
     # Already PascalCase?
     if snake in _ALL_VALID_PASCAL:
         return snake
-    # MIF 1.4.1 kebab-case tokens (relates-to) map onto the snake_case table
+    # MIF 1.4.2 kebab-case tokens (relates-to) map onto the snake_case table
     key = snake.replace("-", "_")
     # Direct lookup first
     if key in _SNAKE_TO_PASCAL:
@@ -150,7 +150,7 @@ def get_inverse(rel_type: str) -> str:
 def is_valid_type(rel_type: str) -> bool:
     """Check if a relationship type is valid (MIF-defined).
 
-    Accepts PascalCase, legacy snake_case and MIF 1.4.1 kebab-case forms,
+    Accepts PascalCase, legacy snake_case and MIF 1.4.2 kebab-case forms,
     and recognizes both forward and inverse types.
 
     Examples:
@@ -165,7 +165,7 @@ def is_valid_type(rel_type: str) -> bool:
         return True
     if rel_type in _SNAKE_TO_PASCAL:
         return True
-    # MIF 1.4.1 kebab-case token (relates-to, superseded-by)
+    # MIF 1.4.2 kebab-case token (relates-to, superseded-by)
     if "-" in rel_type and rel_type.replace("-", "_") in _SNAKE_TO_PASCAL:
         return True
     return False
@@ -187,7 +187,7 @@ def is_symmetric(rel_type: str) -> bool:
 
 
 def to_token(rel_type: str) -> str:
-    """Return the MIF 1.4.1 kebab-case token for any accepted spelling.
+    """Return the MIF 1.4.2 kebab-case token for any accepted spelling.
 
     Examples:
         RelatesTo -> relates-to
@@ -214,10 +214,10 @@ def add_relationship(
     label: Optional[str] = None,
     target_title: Optional[str] = None,
 ) -> bool:
-    """Add a relationship to a memory file (MIF 1.4.1 form).
+    """Add a relationship to a memory file (MIF 1.4.2 form).
 
     Writes the authoritative frontmatter entry and mirrors it as a markdown
-    link under the body ``## Relationships`` section (MIF 1.4.1 section 5.3)::
+    link under the body ``## Relationships`` section (MIF 1.4.2 section 5.3)::
 
         relationships:
           - type: relates-to
@@ -340,7 +340,7 @@ def add_bidirectional_relationship(
     """Add a relationship in both directions between two memory files.
 
     Creates A->B with the given rel_type and B->A with the proper inverse type,
-    both written as MIF 1.4.1 kebab-case tokens with ``urn:mif:`` targets.
+    both written as MIF 1.4.2 kebab-case tokens with ``urn:mif:`` targets.
 
     Args:
         source_path: Path to the source memory file (A).

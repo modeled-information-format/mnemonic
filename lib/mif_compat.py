@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-MIF 1.4.1 compatibility helpers.
+MIF 1.4.2 compatibility helpers.
 
-mnemonic writes MIF (Modeled Information Format) 1.4.1 forms going forward
+mnemonic writes MIF (Modeled Information Format) 1.4.2 forms going forward
 and keeps reading the legacy forms that memories written by older mnemonic
 releases still carry on disk:
 
 =====================================  ==========================================
-Legacy form (still read)               MIF 1.4.1 form (written)
+Legacy form (still read)               MIF 1.4.2 form (written)
 =====================================  ==========================================
 snake_case concept frontmatter keys    camelCase keys (spec section 3.3), e.g.
 (``valid_from``, ``source_type``,      ``validFrom``, ``sourceType``,
@@ -23,7 +23,7 @@ citation ``type``                      ``citationType`` (spec section 5.4)
 =====================================  ==========================================
 
 Readers should go through these helpers so both forms resolve identically,
-always preferring the MIF 1.4.1 form when a file carries both.
+always preferring the MIF 1.4.2 form when a file carries both.
 
 This module is stdlib-only and Python 3.8 compatible: it is imported by
 hooks, tools and the custodian skill.
@@ -34,7 +34,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 # ---------------------------------------------------------------------------
-# Frontmatter key aliases (legacy snake_case -> MIF 1.4.1 camelCase)
+# Frontmatter key aliases (legacy snake_case -> MIF 1.4.2 camelCase)
 # ---------------------------------------------------------------------------
 
 # Keyed by the dotted path of the mapping that holds the keys ("" = top level).
@@ -70,9 +70,9 @@ LEGACY_KEY_ALIASES: Dict[str, Dict[str, str]] = {
     },
 }
 
-# Top-level fields older mnemonic capture templates wrote, which MIF 1.4.1
+# Top-level fields older mnemonic capture templates wrote, which MIF 1.4.2
 # places under provenance / temporal / temporal.decay. Still tolerated on
-# read; tools/mnemonic-migrate-mif nests them. Maps to the MIF 1.4.1 path.
+# read; tools/mnemonic-migrate-mif nests them. Maps to the MIF 1.4.2 path.
 LEGACY_TOP_LEVEL_FIELDS: Dict[str, str] = {
     "confidence": "provenance.confidence",
     "strength": "temporal.decay.strength",
@@ -81,7 +81,7 @@ LEGACY_TOP_LEVEL_FIELDS: Dict[str, str] = {
     "last_accessed": "temporal.lastAccessed",
 }
 
-# MIF 1.4.1 provenance.sourceType enum (spec section 12.1).
+# MIF 1.4.2 provenance.sourceType enum (spec section 12.1).
 MIF_SOURCE_TYPES = (
     "user_explicit",
     "user_implicit",
@@ -104,7 +104,7 @@ def camel_to_snake(key: str) -> str:
 
 def get_compat(mapping: Any, key: str, default: Any = None) -> Any:
     """Read ``key`` (camelCase) from ``mapping``, falling back to its legacy
-    snake_case spelling. The MIF 1.4.1 key wins when both are present."""
+    snake_case spelling. The MIF 1.4.2 key wins when both are present."""
     if not isinstance(mapping, dict):
         return default
     if mapping.get(key) is not None:
@@ -129,7 +129,7 @@ def find_legacy_keys(frontmatter: Any) -> List[Tuple[str, str]]:
     """Return ``(legacy_path, new_path)`` for every legacy key present.
 
     Paths are dotted (``temporal.valid_from``). Used by validators to nudge
-    toward the MIF 1.4.1 spelling without failing legacy files.
+    toward the MIF 1.4.2 spelling without failing legacy files.
     """
     found: List[Tuple[str, str]] = []
     if not isinstance(frontmatter, dict):
@@ -188,7 +188,7 @@ def _rename_key(mapping: Any, old: str, new: str) -> None:
 
 
 def migrate_legacy_keys(frontmatter: Any) -> Tuple[List[str], List[str]]:
-    """Rename known legacy keys to MIF 1.4.1 camelCase, in place.
+    """Rename known legacy keys to MIF 1.4.2 camelCase, in place.
 
     Returns ``(changes, conflicts)``. A conflict is a legacy key whose
     camelCase twin already exists; it is left untouched for a human to
@@ -213,7 +213,7 @@ def migrate_legacy_keys(frontmatter: Any) -> Tuple[List[str], List[str]]:
 
 
 # ---------------------------------------------------------------------------
-# Ontology merging (MIF 1.4.1 section 10.8.5)
+# Ontology merging (MIF 1.4.2 section 10.8.5)
 # ---------------------------------------------------------------------------
 
 
@@ -258,7 +258,7 @@ KEBAB_TYPE_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]*(:[a-z0-9][a-z0-9-]*)?$")
 
 
 def to_kebab(rel_type: str) -> str:
-    """Normalize a relationship type to its MIF 1.4.1 kebab-case token.
+    """Normalize a relationship type to its MIF 1.4.2 kebab-case token.
 
     Accepts PascalCase (``DerivedFrom``), snake_case (``derived_from``) and
     kebab-case (``derived-from``), with an optional ``ns:`` prefix. Applies
@@ -278,7 +278,7 @@ def to_kebab(rel_type: str) -> str:
 
 
 def is_kebab_type(rel_type: str) -> bool:
-    """True when ``rel_type`` is already in MIF 1.4.1 token form."""
+    """True when ``rel_type`` is already in MIF 1.4.2 token form."""
     return bool(KEBAB_TYPE_PATTERN.match(str(rel_type or "")))
 
 
@@ -310,7 +310,7 @@ def target_ref(target: Any) -> str:
 
 
 def format_target(target: str) -> str:
-    """Return the MIF 1.4.1 written form of a target: ``urn:mif:<uuid>`` for a
+    """Return the MIF 1.4.2 written form of a target: ``urn:mif:<uuid>`` for a
     UUID, otherwise the target unchanged (already a urn or a path)."""
     ref = target_ref(target)
     if UUID_PATTERN.match(ref):
@@ -332,7 +332,7 @@ def is_concept_target(target: Any) -> bool:
     return bool(UUID_PATTERN.match(target_ref(target)))
 
 
-# MIF 1.4.1 core relationship tokens (section 8.2), forward and inverse
+# MIF 1.4.2 core relationship tokens (section 8.2), forward and inverse
 CORE_RELATIONSHIP_TOKENS = frozenset(
     {
         "relates-to",
@@ -365,7 +365,7 @@ def is_relationship_type(rel_type: Any) -> bool:
 
 
 def relationship_label(rel: Any) -> Optional[str]:
-    """Return a relationship's label from ``metadata.label`` (1.4.1) or the
+    """Return a relationship's label from ``metadata.label`` (1.4.2) or the
     legacy top-level ``label``."""
     if not isinstance(rel, dict):
         return None
@@ -404,7 +404,7 @@ def _section_span(body: str) -> Optional[Tuple[int, int]]:
 def parse_body_relationships(body: str) -> List[Dict[str, str]]:
     """Parse relationship lines from the body ``## Relationships`` section.
 
-    Recognizes both the MIF 1.4.1 markdown-link form and the legacy
+    Recognizes both the MIF 1.4.2 markdown-link form and the legacy
     ``[[wiki-link]]`` form. Each entry has ``type`` (as written), ``target``
     (as written), ``text`` and ``form`` (``"markdown"`` or ``"wiki"``).
     """
@@ -427,7 +427,7 @@ def parse_body_relationships(body: str) -> List[Dict[str, str]]:
 
 
 def render_relationship_line(rel_type: str, target: str, text: Optional[str] = None) -> str:
-    """Render one MIF 1.4.1 body mirror line: ``- <type> [Text](<target>)``."""
+    """Render one MIF 1.4.2 body mirror line: ``- <type> [Text](<target>)``."""
     shown = (text or target_ref(target) or target).replace("[", "(").replace("]", ")").strip()
     return f"- {to_kebab(rel_type)} [{shown}]({format_target(target)})"
 

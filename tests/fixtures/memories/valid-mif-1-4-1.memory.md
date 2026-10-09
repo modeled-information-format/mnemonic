@@ -3,7 +3,7 @@ id: 550e8400-e29b-41d4-a716-446655440141
 type: semantic
 namespace: decisions/project
 created: 2026-10-08T10:30:00Z
-title: "Use PostgreSQL for Storage (MIF 1.4.1 form)"
+title: "Use PostgreSQL for Storage (MIF 1.4.2 form)"
 modified: 2026-10-08T14:22:00Z
 tags:
   - architecture

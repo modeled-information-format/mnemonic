@@ -196,7 +196,7 @@ For each file in COMPRESS_CANDIDATES:
 
   3. Insert summary into frontmatter (after provenance):
      - Add: summary: "{summary}"
-     - Add: compressedAt: {timestamp}   (MIF 1.4.1; never the legacy compressed_at)
+     - Add: compressedAt: {timestamp}   (MIF 1.4.2; never the legacy compressed_at)
 
   4. Optionally add new keywords to tags
 ```
@@ -302,7 +302,7 @@ echo ""
 echo "Updating decay scores..."
 
 for f in $(find "$HOME/.claude/mnemonic/$ORG" "./.claude/mnemonic" -name "*.memory.md" 2>/dev/null); do
-    # MIF 1.4.1 keys (lastAccessed, halfLife) or legacy (last_accessed, half_life)
+    # MIF 1.4.2 keys (lastAccessed, halfLife) or legacy (last_accessed, half_life)
     LAST_ACCESS=$(grep -E "(lastAccessed|last_accessed):" "$f" 2>/dev/null | head -1 | sed -E 's/.*(lastAccessed|last_accessed): //')
     HALF_LIFE=$(grep -E "(halfLife|half_life):" "$f" 2>/dev/null | head -1 | sed -E 's/.*(halfLife|half_life): //')
     CURRENT_STRENGTH=$(grep "strength:" "$f" 2>/dev/null | sed 's/.*strength: //')

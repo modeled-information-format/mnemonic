@@ -63,7 +63,7 @@ Validates MIF Level 3 required fields and formats:
 
 Additional checks:
 - `provenance.confidence` should be between 0.0 and 1.0
-- `provenance.sourceType` should be a MIF 1.4.1 value (`user_explicit`,
+- `provenance.sourceType` should be a MIF 1.4.2 value (`user_explicit`,
   `user_implicit`, `agent_inferred`, `external_import`, `system_generated`)
 - `compressedAt`, if present, must be an ISO 8601 timestamp
 - `tags` should be lowercase with hyphens
@@ -72,7 +72,7 @@ Additional checks:
 ### Legacy forms (warnings only)
 
 Memories written by earlier mnemonic releases are still valid. These forms
-produce **warnings**, never errors, each naming the MIF 1.4.1 replacement:
+produce **warnings**, never errors, each naming the MIF 1.4.2 replacement:
 
 - snake_case frontmatter keys (`valid_from`, `source_type`, `compressed_at`,
   `code_refs`, ...)
@@ -97,7 +97,7 @@ For memories with `codeRefs` (legacy: `code_refs`):
 
 For memories with `citations`:
 - `citationType` (required; legacy spelling `type` accepted) should be a MIF
-  1.4.1 value (`article`, `book`, `paper`, `website`, `documentation`,
+  1.4.2 value (`article`, `book`, `paper`, `website`, `documentation`,
   `repository`, `video`, `podcast`, `specification`, `dataset`, `tool`,
   `other`) or a legacy mnemonic value (`blog`, `github`, `stackoverflow`)
 - `citationRole` should be present (warning if missing)
@@ -109,7 +109,7 @@ For memories with `citations`:
 
 Validates relationship links:
 - every frontmatter `relationships` entry should be mirrored as a Markdown
-  link under `## Relationships` (MIF 1.4.1 section 5.3); a legacy
+  link under `## Relationships` (MIF 1.4.2 section 5.3); a legacy
   `[[uuid]]` line counts as a mirror but is itself warned about
 - legacy `[[uuid]]` patterns in the body must have a valid UUID format
 - (Future: referenced memory should exist)

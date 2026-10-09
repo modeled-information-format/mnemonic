@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-mnemonic-migrate-mif: Upgrade legacy memory files to MIF 1.4.1 forms.
+mnemonic-migrate-mif: Upgrade legacy memory files to MIF 1.4.2 forms.
 
 OPT-IN and DRY-RUN BY DEFAULT. Nothing is written unless --apply is given.
 mnemonic reads legacy files without migrating them, so running this is
@@ -63,7 +63,7 @@ def _default_paths():
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="mnemonic-migrate-mif",
-        description="Upgrade legacy mnemonic memory files to MIF 1.4.1 forms (dry run unless --apply).",
+        description="Upgrade legacy mnemonic memory files to MIF 1.4.2 forms (dry run unless --apply).",
     )
     parser.add_argument("paths", nargs="*", type=Path, help="files or directories (default: MNEMONIC_ROOT)")
     parser.add_argument("--apply", action="store_true", help="write changes (default: dry run)")
@@ -139,7 +139,7 @@ def main(argv=None) -> int:
                         plan.original_text.splitlines(keepends=True),
                         plan.new_text.splitlines(keepends=True),
                         fromfile=str(plan.path),
-                        tofile=str(plan.path) + " (MIF 1.4.1)",
+                        tofile=str(plan.path) + " (MIF 1.4.2)",
                     )
                 )
         for item in skipped:
