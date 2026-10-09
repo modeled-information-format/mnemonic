@@ -76,7 +76,7 @@ Update strength scores based on time and access patterns. For each memory with `
 
 ### 4. Relationship Integrity
 
-Verify every relationship target resolves to an existing memory: frontmatter `relationships[].target` (`urn:mif:<uuid>`, or a bare UUID in legacy files), the matching Markdown links under `## Relationships`, and legacy `[[id]]` wiki-links. Every frontmatter relationship should have a body link (MIF 1.4.1 section 5.3). Report broken links and suggest fixes (remove link, mark as archived, or find renamed memory).
+Verify every relationship target resolves to an existing memory: frontmatter `relationships[].target` (`urn:mif:<uuid>`, or a bare UUID in legacy files), the matching Markdown links under `## Relationships`, and legacy `[[id]]` wiki-links. Every frontmatter relationship should have a body link (MIF 1.4.2 section 5.3). Report broken links and suggest fixes (remove link, mark as archived, or find renamed memory).
 
 ### 5. Cleanup Operations
 

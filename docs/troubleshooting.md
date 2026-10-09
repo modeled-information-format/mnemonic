@@ -491,7 +491,7 @@ print(valid_types)
 # Use valid type from ontology
 ````
 
-Valid default types (MIF 1.4.1 token / registry name; legacy snake_case
+Valid default types (MIF 1.4.2 token / registry name; legacy snake_case
 spellings such as `relates_to` are still accepted on read):
 - `relates-to` / `RelatesTo`
 - `derived-from` / `DerivedFrom` (inverse: `derives`)

@@ -96,7 +96,7 @@ def _regex_fallback_parse(text: str) -> dict:
             type_m = re.search(r"type:\s*([^\n]+)", block)
             # Targets may be a bare UUID (legacy), urn:mif:<uuid> or a bundle path
             target_m = re.search(r"target:\s*[\"']?([^\s\"']+)", block)
-            # label (legacy, top-level) or metadata.label (MIF 1.4.1)
+            # label (legacy, top-level) or metadata.label (MIF 1.4.2)
             label_m = re.search(r"label:\s*[\"']?([^\"'\n]+)", block)
             if type_m:
                 rel["type"] = type_m.group(1).strip()
@@ -171,8 +171,8 @@ def get_memory_metadata(path: str, max_summary: int = 300) -> Optional[dict]:
         max_summary: Maximum characters for the summary text.
 
     Relationship entries are returned as written (``type`` and ``target``
-    keep their on-disk spelling, legacy or MIF 1.4.1); ``label`` is read from
-    MIF 1.4.1 ``metadata.label`` or the legacy top-level ``label``. Use
+    keep their on-disk spelling, legacy or MIF 1.4.2); ``label`` is read from
+    MIF 1.4.2 ``metadata.label`` or the legacy top-level ``label``. Use
     ``lib.mif_compat.to_kebab`` / ``target_ref`` to compare them.
 
     Returns:

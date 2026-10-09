@@ -53,11 +53,11 @@ If the Python script is not available, use the Read tool to display ontology fil
 # Read base ontology
 cat "${PLUGIN_DIR}/skills/ontology/fallback/ontologies/mif-base.ontology.yaml" 2>/dev/null
 
-# Read project ontologies (MIF 1.4.1 location, then legacy)
+# Read project ontologies (MIF 1.4.2 location, then legacy)
 cat .mif/ontologies/*.yaml 2>/dev/null
 cat ".claude/mnemonic/ontology.yaml" 2>/dev/null
 
-# Read user ontologies (MIF 1.4.1 location, then legacy)
+# Read user ontologies (MIF 1.4.2 location, then legacy)
 cat "$HOME"/.mif/ontologies/*.yaml 2>/dev/null
 cat "$HOME/.claude/mnemonic/ontology.yaml" 2>/dev/null
 ```

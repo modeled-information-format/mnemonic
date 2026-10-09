@@ -112,7 +112,7 @@ If you find related memories, add them to the `relationships:` field in Step 4.
         label: "Related decision"
   ```
   Mirror each one in the body under `## Relationships` as
-  `- supersedes [Target Title](urn:mif:<target-uuid>)` (MIF 1.4.1 section 5.3).
+  `- supersedes [Target Title](urn:mif:<target-uuid>)` (MIF 1.4.2 section 5.3).
 
 ```bash
 # Resolve MNEMONIC_ROOT from config

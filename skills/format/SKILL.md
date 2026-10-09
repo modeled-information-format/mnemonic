@@ -22,7 +22,7 @@ Run `/mnemonic:list --namespaces` to see available namespaces from loaded ontolo
 
 MIF (Modeled Information Format) 1.4.2 Level 3 templates and formatting guidelines.
 
-Concept frontmatter keys are camelCase (MIF 1.4.1 section 3.3). Older
+Concept frontmatter keys are camelCase (MIF 1.4.2 section 3.3). Older
 mnemonic memories may still carry snake_case keys (`valid_from`,
 `source_type`, `compressed_at`), `relates_to` relationship types, bare-UUID
 targets and `[[uuid]]` wiki-links. Those are still read, but always **write**
@@ -64,7 +64,7 @@ Content here.
 - **slug**: URL-safe title, lowercase, max 50 chars
 - UUID is stored only in the frontmatter `id:` field
 - If a file with the same slug already exists, content is merged
-- MIF 1.4.1 names concept files `{slug}.md` and calls the `.memory` infix
+- MIF 1.4.2 names concept files `{slug}.md` and calls the `.memory` infix
   legacy. mnemonic keeps `{slug}.memory.md` because its search, hooks and
   tools all glob `*.memory.md`.
 
@@ -125,11 +125,11 @@ codeRefs:
     symbol: authenticateUser
     type: function                # function | class | method | variable | type
 
-# CITATIONS (MIF 1.4.1 section 5.4)
+# CITATIONS (MIF 1.4.2 section 5.4)
 citations:
   - "@type": Citation
     citationType: documentation   # article | book | paper | website | documentation | repository | video | podcast | specification | dataset | tool | other
-    citationRole: supports        # see MIF 1.4.1 section 5.4.4
+    citationRole: supports        # see MIF 1.4.2 section 5.4.4
     title: "Source Title"
     url: https://example.com/source
     author: "Author Name"
@@ -169,7 +169,7 @@ Content in markdown format.
 
 Relationships are authoritative in the frontmatter `relationships` array and
 **every** entry is mirrored as a Markdown link in a `## Relationships`
-section at the end of the body (MIF 1.4.1 section 5.3), one per line:
+section at the end of the body (MIF 1.4.2 section 5.3), one per line:
 
 ```markdown
 ## Relationships

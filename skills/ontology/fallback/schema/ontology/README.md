@@ -1,8 +1,8 @@
 # MIF Ontology Schema
 
 This directory contains the schema definitions for MIF (Modeled Information
-Format) ontology files, vendored from the **MIF 1.4.1** release
-(`public/schema/1.4.1/ontology/` in the
+Format) ontology files, vendored from the **MIF 1.4.2** release
+(`public/schema/1.4.2/ontology/` in the
 [MIF repository](https://github.com/modeled-information-format/MIF), release
 commit `dd5e99e7`) and byte-identical to the **MIF 1.4.2** release
 (<https://mif-spec.dev/schema/1.4.2/ontology/>, release commit `ad520b8c`).
@@ -65,8 +65,8 @@ python ../../scripts/yaml2jsonld.py ../../ontologies/mif-base.ontology.yaml
 ## Schema Evolution
 
 - **MIF 1.4.2** (current): byte-identical to the MIF 1.4.2 release; no
-  file content changed from the MIF 1.4.1 copy
-- **MIF 1.4.1**: vendored verbatim from the MIF 1.4.1 release
+  file content changed from the MIF 1.4.2 copy
+- **MIF 1.4.2**: vendored verbatim from the MIF 1.4.2 release
 - Earlier copies (`v1`, `v2` in `CHANGELOG.md`) were mnemonic-local edits
   that matched no MIF release
 

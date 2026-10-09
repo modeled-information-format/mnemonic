@@ -39,7 +39,7 @@ from typing import List, Optional
 
 from lib.config import MnemonicConfig
 
-# MIF 1.4.1 ontology directory, relative to a project root or the home
+# MIF 1.4.2 ontology directory, relative to a project root or the home
 # directory (spec section 10.8.5: `.mif/ontologies/` and `~/.mif/ontologies/`).
 MIF_ONTOLOGY_DIR = Path(".mif") / "ontologies"
 
@@ -274,7 +274,7 @@ class PathResolver:
         """
         Get ordered list of ontology file paths to check.
 
-        MIF 1.4.1 (spec section 10.8.5) locations are checked first; the
+        MIF 1.4.2 (spec section 10.8.5) locations are checked first; the
         locations used by earlier mnemonic releases remain as fallbacks so
         existing custom ontologies keep loading.
 
@@ -297,7 +297,7 @@ class PathResolver:
         """
         paths: List[Path] = []
 
-        # 1. Project ontologies (MIF 1.4.1)
+        # 1. Project ontologies (MIF 1.4.2)
         paths.extend(mif_ontology_files(self.context.project_dir / MIF_ONTOLOGY_DIR))
 
         # 2. Legacy project ontology
@@ -306,7 +306,7 @@ class PathResolver:
         else:
             paths.append(self.context.memory_root / self.context.org / self.context.project / "ontology.yaml")
 
-        # 3. User ontologies (MIF 1.4.1)
+        # 3. User ontologies (MIF 1.4.2)
         paths.extend(mif_ontology_files(self.context.home_dir / MIF_ONTOLOGY_DIR))
 
         # 4. Legacy user/org ontology

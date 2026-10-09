@@ -254,10 +254,10 @@ Mitigations for negative consequences:
 
 ### 2026-10-08
 
-**Status:** Accepted (amended for MIF 1.4.1)
+**Status:** Accepted (amended for MIF 1.4.2)
 
 **Findings:** "MIF" expands to *Modeled Information Format*; earlier text
-said "Memory Interchange Format" and has been corrected. MIF 1.4.1 (section
+said "Memory Interchange Format" and has been corrected. MIF 1.4.2 (section
 3.3) spells concept frontmatter keys in camelCase, so the format structure
 above is now written as `validFrom`, `recordedAt`, `decay.halfLife`,
 `provenance.sourceType` (values `user_explicit`, `user_implicit`,
@@ -267,5 +267,5 @@ relationship is mirrored as a Markdown link under `## Relationships`. The
 snake_case spellings shown in *Format Structure* remain readable for
 memories written before this change.
 
-**Action Required:** None. Writers emit the 1.4.1 forms; readers accept
+**Action Required:** None. Writers emit the 1.4.2 forms; readers accept
 both; `tools/mnemonic-migrate-mif` upgrades legacy files on request.

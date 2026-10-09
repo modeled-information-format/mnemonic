@@ -377,7 +377,7 @@ def get_ontology_info() -> dict:
             info["discovery_enabled"] = mif_data["discovery"].get("enabled", False)
 
     # Also check custom ontologies (they extend MIF base). Every existing file
-    # contributes (MIF 1.4.1 section 10.8.5); on conflicts the
+    # contributes (MIF 1.4.2 section 10.8.5); on conflicts the
     # higher-precedence file (earlier in get_ontology_paths) wins.
     custom_paths = get_v2_resolver().get_ontology_paths()
     loaded_paths = []

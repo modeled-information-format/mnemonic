@@ -51,7 +51,7 @@ class TestGetRelationshipSuggestions:
         result = get_relationship_suggestions(ontology_data, "/src/auth_handler.py", "_semantic/decisions")
 
         assert result != ""
-        # Suggestions use the MIF 1.4.1 kebab-case token agents should write
+        # Suggestions use the MIF 1.4.2 kebab-case token agents should write
         assert "[relates-to]" in result
         assert "JWT Authentication Decision" in result
         assert "a5e46807-688" in result

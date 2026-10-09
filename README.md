@@ -16,7 +16,7 @@ A pure filesystem-based memory system for Claude Code. No external dependencies 
 ## Features
 
 - **Pure Filesystem**: All memories stored as markdown files with YAML frontmatter
-- **MIF 1.4.2 Level 3**: New memories are written in Modeled Information Format 1.4.2 form; memories written by earlier releases keep working (see [MIF 1.4.1 alignment](#mif-141-alignment))
+- **MIF 1.4.2 Level 3**: New memories are written in Modeled Information Format 1.4.2 form; memories written by earlier releases keep working (see [MIF 1.4.2 alignment](#mif-142-alignment))
 - **Skill-First Architecture**: Skills work standalone without hooks or libraries
 - **Cognitive Memory Types**: Semantic, episodic, and procedural memories
 - **Custom Ontologies**: Extend with domain-specific entity types and relationships
@@ -160,9 +160,9 @@ We decided to use PostgreSQL for our data storage needs.
 - supersedes [Use SQLite for storage](urn:mif:b6f57918-7994-4dc3-af56-10983bf2b005)
 ```
 
-### MIF 1.4.1 alignment
+### MIF 1.4.2 alignment
 
-New memories use the MIF 1.4.1 forms shown above: camelCase frontmatter keys
+New memories use the MIF 1.4.2 forms shown above: camelCase frontmatter keys
 (`validFrom`, `sourceType`, `compressedAt`, ...), kebab-case relationship
 types (`relates-to`), `urn:mif:<uuid>` relationship targets, and every
 frontmatter relationship mirrored as a Markdown link under `## Relationships`.
@@ -182,7 +182,7 @@ tools/mnemonic-migrate-mif path/to/dir     # dry run over one directory
 tools/mnemonic-migrate-mif --apply         # rewrite in place (with backups)
 ```
 
-Memory files keep the `{slug}.memory.md` name. MIF 1.4.1 calls the `.memory`
+Memory files keep the `{slug}.memory.md` name. MIF 1.4.2 calls the `.memory`
 infix legacy, but every mnemonic search, hook and tool globs `*.memory.md`, so
 renaming is out of scope for this tool.
 
@@ -432,7 +432,7 @@ mnemonic/
 │       └── ontologies/     # Base ontology and examples
 ├── tools/
 │   ├── mnemonic-validate   # MIF schema validation
-│   ├── mnemonic-migrate-mif # Opt-in legacy -> MIF 1.4.1 rewrite (dry run by default)
+│   ├── mnemonic-migrate-mif # Opt-in legacy -> MIF 1.4.2 rewrite (dry run by default)
 │   ├── mnemonic-query      # Structured queries
 │   └── mnemonic-paths      # Path resolution CLI
 ├── tests/

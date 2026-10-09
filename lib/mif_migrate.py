@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Opt-in migration of legacy mnemonic memory files to MIF 1.4.1 forms.
+Opt-in migration of legacy mnemonic memory files to MIF 1.4.2 forms.
 
 Used by ``tools/mnemonic-migrate-mif``. Nothing in mnemonic calls this
 automatically: readers already accept the legacy forms (see
@@ -20,7 +20,7 @@ Per file, :func:`plan_file` computes (without writing) the rewrite that:
    ``"@type": Citation``;
 5. converts ``## Relationships`` wiki-link lines (``- relates-to [[uuid]]``)
    to markdown links and makes frontmatter and body mirror each other
-   (MIF 1.4.1 section 5.3).
+   (MIF 1.4.2 section 5.3).
 
 It never renames files (mnemonic globs ``*.memory.md`` everywhere), never
 changes values it cannot map mechanically (legacy ``sourceType`` values,
@@ -277,7 +277,7 @@ def _migrate_citations(fm: Any, changes: List[str], notes: List[str]) -> None:
                 cite["@type"] = "Citation"
             changes.append(f'citations[{i}] add "@type": Citation')
         if "citationRole" not in cite:
-            notes.append(f"citations[{i}] has no citationRole (MIF 1.4.1 requires one; not inferred)")
+            notes.append(f"citations[{i}] has no citationRole (MIF 1.4.2 requires one; not inferred)")
 
 
 def _migrate_body(
@@ -339,7 +339,7 @@ def _migrate_body(
 
 
 def plan_file(path: Path, index: Optional[Dict[str, Dict[str, str]]] = None) -> FilePlan:
-    """Compute the MIF 1.4.1 rewrite for one file. Never writes."""
+    """Compute the MIF 1.4.2 rewrite for one file. Never writes."""
     plan = FilePlan(path=path)
     index = index or {}
     try:
@@ -376,7 +376,7 @@ def plan_file(path: Path, index: Optional[Dict[str, Dict[str, str]]] = None) -> 
 
     source_type = get_compat(fm.get("provenance"), "sourceType")
     if source_type is not None and source_type not in MIF_SOURCE_TYPES:
-        plan.notes.append(f"provenance.sourceType {source_type!r} is not a MIF 1.4.1 value; left as-is")
+        plan.notes.append(f"provenance.sourceType {source_type!r} is not a MIF 1.4.2 value; left as-is")
 
     body_changes: List[str] = []
     new_body, body_only = _migrate_body(body, edges, index, body_changes, plan.notes)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MIF 1.4.1 alignment: new forms are written, legacy forms are still read.
+MIF 1.4.2 alignment: new forms are written, legacy forms are still read.
 
 Covers lib/mif_compat.py, the relationship writer, memory reader, custodian
 readers, mnemonic-validate, ontology resolution and the opt-in migration
@@ -433,7 +433,7 @@ class TestValidatorTool:
 
 
 # ---------------------------------------------------------------------------
-# Ontology resolution (MIF 1.4.1 section 10.8.5)
+# Ontology resolution (MIF 1.4.2 section 10.8.5)
 # ---------------------------------------------------------------------------
 
 

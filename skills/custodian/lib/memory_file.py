@@ -104,7 +104,7 @@ class MemoryFile:
         return obj if obj is not None else default
 
     def get_compat(self, *keys: str, default: Any = None) -> Any:
-        """Nested lookup preferring MIF 1.4.1 camelCase keys, falling back to
+        """Nested lookup preferring MIF 1.4.2 camelCase keys, falling back to
         the legacy snake_case spelling, e.g. get_compat('temporal', 'lastAccessed')."""
         return get_nested_compat(self._frontmatter, *keys, default=default)
 
@@ -141,7 +141,7 @@ class MemoryFile:
     def find_relationship_targets(self) -> List[str]:
         """Extract relationship target IDs (``urn:mif:`` prefix stripped).
 
-        Reads the frontmatter ``relationships`` array, MIF 1.4.1 markdown
+        Reads the frontmatter ``relationships`` array, MIF 1.4.2 markdown
         links in the body ``## Relationships`` section, and legacy
         ``[[wiki-link]]`` references anywhere in the file.
         """
@@ -153,7 +153,7 @@ class MemoryFile:
                     tid = target_ref(rel.get("target"))
                     if tid and tid not in targets:
                         targets.append(tid)
-        # MIF 1.4.1 body mirror (markdown links to urn:mif:<uuid>); ordinary
+        # MIF 1.4.2 body mirror (markdown links to urn:mif:<uuid>); ordinary
         # prose links in the section are not relationships. Wiki-links below.
         for entry in parse_body_relationships(self._body):
             if entry["form"] != "markdown" or not is_concept_target(entry["target"]):

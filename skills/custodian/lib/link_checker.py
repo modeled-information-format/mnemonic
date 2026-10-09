@@ -259,7 +259,7 @@ def ensure_bidirectional(
             # Check if target has the inverse relationship back
             target_mem = MemoryFile(target_path)
             target_rels = target_mem.get("relationships")
-            # Compare on MIF 1.4.1 kebab-case tokens so legacy spellings
+            # Compare on MIF 1.4.2 kebab-case tokens so legacy spellings
             # (PascalCase, snake_case) and new ones match each other.
             inverse_token = to_kebab(get_inverse(rel_type))
 
@@ -284,7 +284,7 @@ def ensure_bidirectional(
 
             if not has_back_ref:
                 missing_count += 1
-                # New back-refs are always written in MIF 1.4.1 form
+                # New back-refs are always written in MIF 1.4.2 form
                 back_ref_type = inverse_token
 
                 if fix:

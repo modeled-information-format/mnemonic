@@ -9,11 +9,11 @@ All notable changes to the ontology schema are documented in this file.
   checked byte-identical to <https://mif-spec.dev/schema/1.4.2/ontology/>
   (MIF 1.4.2, release commit `ad520b8c`). File contents are unchanged.
 
-## [MIF 1.4.1] - 2026-10-08
+## [MIF 1.4.2] - 2026-10-08
 
 ### Changed
 - Re-vendored `ontology.schema.json` and `ontology.context.jsonld` verbatim
-  from MIF 1.4.1 (`public/schema/1.4.1/ontology/`). The previous copies were
+  from MIF 1.4.2 (`public/schema/1.4.2/ontology/`). The previous copies were
   local edits that matched no MIF release.
 - JSON-LD context vocabulary moved to `https://mif-spec.dev/ns/ontology#`
   (`mif:` prefix is now `https://mif-spec.dev/ns/`).

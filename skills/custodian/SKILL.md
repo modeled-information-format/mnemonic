@@ -114,7 +114,7 @@ Scans all memory relationships and checks that each has a corresponding inverse
 back-reference in the target. For example, if A `supersedes` B, B should have
 `superseded-by` pointing back to A. Legacy spellings (`SupersededBy`,
 `superseded_by`) and bare-UUID targets count as present; new back-references
-are written in MIF 1.4.1 form (kebab-case type, `urn:mif:<uuid>` target, plus a
+are written in MIF 1.4.2 form (kebab-case type, `urn:mif:<uuid>` target, plus a
 body `## Relationships` link).
 
 Without `--fix`: reports missing back-references as warnings.
