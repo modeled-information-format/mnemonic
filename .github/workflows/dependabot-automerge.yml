@@ -17,7 +17,7 @@ permissions:
 jobs:
   automerge:
     if: ${{ github.actor == 'dependabot[bot]' }}
-    uses: modeled-information-format/.github/.github/workflows/reusable-dependabot-automerge.yml@801dc88df4d12908445865f9d96d9708f52f9900 # reusable-dependabot-automerge.yml @ .github main
+    uses: modeled-information-format/.github/.github/workflows/reusable-dependabot-automerge.yml@68c404307acbd9a47335ef41b57ff45002243826 # reusable-dependabot-automerge.yml @ .github main
     with:
       update-types: patch
     secrets:
